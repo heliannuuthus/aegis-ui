@@ -1,0 +1,168 @@
+@use '../../styles/variables' as *;
+
+// ========================================
+// Logo 组件样式
+// ========================================
+
+.container {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+// 尺寸变体
+.sm {
+  .logo {
+    width: 40px;
+    height: 40px;
+  }
+  .text {
+    font-size: $text-lg;
+  }
+}
+
+.md {
+  .logo {
+    width: 56px;
+    height: 56px;
+  }
+  .text {
+    font-size: $text-xl;
+  }
+}
+
+.lg {
+  .logo {
+    width: 72px;
+    height: 72px;
+  }
+  .text {
+    font-size: $text-2xl;
+  }
+}
+
+.xl {
+  .logo {
+    width: 96px;
+    height: 96px;
+  }
+  .text {
+    font-size: $text-3xl;
+  }
+}
+
+// Logo 主体
+.logo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-xl;
+  transition: transform $duration-normal $ease-out;
+
+  &:hover {
+    transform: translateY(-2px) scale(1.02);
+  }
+}
+
+// 盾牌 SVG
+.shield {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 4px 12px rgba($primary-color, 0.3));
+}
+
+.shieldBody {
+  transition: all $duration-normal $ease-out;
+}
+
+.shieldHighlight {
+  opacity: 0.6;
+}
+
+// 光晕效果
+.glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120%;
+  height: 120%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba($primary-color, 0.3) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity $duration-normal $ease-out;
+  z-index: 0;
+  pointer-events: none;
+}
+
+// 动画效果
+.animated {
+  animation: logoEnter 0.6s $ease-out;
+
+  &:hover {
+    .glow {
+      opacity: 1;
+    }
+
+    .shield {
+      filter: drop-shadow(0 8px 20px rgba($primary-color, 0.4));
+    }
+  }
+}
+
+@keyframes logoEnter {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(-10px);
+  }
+  60% {
+    transform: scale(1.05) translateY(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+// 颜色变体
+.default {
+  .shield path:first-child {
+    fill: url(#shieldGradient);
+  }
+}
+
+.light {
+  .shield {
+    filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.2));
+  }
+  .glow {
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+  }
+}
+
+.dark {
+  .shield path:first-child {
+    fill: url(#shieldGradient);
+  }
+}
+
+// 文字样式
+.text {
+  font-weight: $font-bold;
+  letter-spacing: -0.02em;
+  transition: color $duration-fast $ease-in-out;
+}
+
+.text-default {
+  color: $text-primary;
+}
+
+.text-light {
+  color: $text-inverse;
+}
+
+.text-dark {
+  color: $text-primary;
+}

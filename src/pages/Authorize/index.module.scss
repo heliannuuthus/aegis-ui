@@ -1,0 +1,44 @@
+@use '../../styles/variables' as *;
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $gradient-bg-subtle;
+  padding: $spacing-5;
+}
+
+.card {
+  width: 100%;
+  max-width: 400px;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-2xl;
+}
+
+.loading {
+  text-align: center;
+  padding: $spacing-10 $spacing-5;
+
+  p {
+    margin-top: $spacing-4;
+    color: $text-muted;
+    font-size: $text-sm;
+  }
+}
+
+.error {
+  text-align: center;
+  padding: $spacing-10 $spacing-5;
+
+  h2 {
+    color: $error-color;
+    margin-bottom: $spacing-4;
+    font-size: $text-xl;
+  }
+
+  p {
+    color: $text-muted;
+    font-size: $text-sm;
+  }
+}

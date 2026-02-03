@@ -1,0 +1,242 @@
+@use '../../styles/variables' as *;
+
+// ========================================
+// 登录页面样式 - 现代简洁风格
+// ========================================
+
+// 主色调
+$primary-color: #0066ff;
+$primary-hover: #0052cc;
+$bg-color: #f8fafc;
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-6;
+  background: $bg-color;
+  position: relative;
+
+  // 微妙的网格背景
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none;
+  }
+}
+
+// ========================================
+// 卡片
+// ========================================
+
+.card {
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 6px 16px rgba(0, 0, 0, 0.06),
+    0 12px 32px rgba(0, 0, 0, 0.04);
+  padding: 40px 36px;
+  position: relative;
+  z-index: 1;
+  animation: cardEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ========================================
+// Logo
+// ========================================
+
+.logo {
+  text-align: center;
+  margin-bottom: 24px;
+
+  svg,
+  img {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    object-fit: contain;
+    transition: transform 0.2s ease;
+
+    &:hover {
+      transform: scale(1.05);
+    }
+  }
+}
+
+// ========================================
+// 标题
+// ========================================
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+  text-align: center;
+  margin: 0 0 6px;
+  letter-spacing: -0.3px;
+
+  &.noSubtitle {
+    margin-bottom: 32px;
+  }
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  text-align: center;
+  margin: 0 0 28px;
+  line-height: 1.5;
+}
+
+// ========================================
+// 内容区域
+// ========================================
+
+.content {
+  margin-bottom: 24px;
+}
+
+.formSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.socialSection {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+// ========================================
+// 分隔线
+// ========================================
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 24px 0;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e5e7eb;
+  }
+
+  span {
+    padding: 0 16px;
+    font-size: 13px;
+    color: #9ca3af;
+  }
+}
+
+// ========================================
+// 空状态
+// ========================================
+
+.emptyState {
+  text-align: center;
+  padding: 32px 16px;
+  color: #6b7280;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 1px dashed #d1d5db;
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+// ========================================
+// 页脚
+// ========================================
+
+.footer {
+  text-align: center;
+  padding-top: 24px;
+  border-top: 1px solid #f3f4f6;
+
+  span {
+    font-size: 12px;
+    color: #9ca3af;
+    line-height: 1.6;
+  }
+
+  a {
+    color: $primary-color;
+    text-decoration: none;
+    margin: 0 2px;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: $primary-hover;
+      text-decoration: underline;
+    }
+  }
+}
+
+// ========================================
+// 加载状态
+// ========================================
+
+.loadingState {
+  text-align: center;
+  padding: 48px 0;
+
+  :global(.ant-spin) {
+    color: $primary-color;
+  }
+
+  p {
+    margin-top: 16px;
+    color: #6b7280;
+    font-size: 14px;
+  }
+}
+
+// ========================================
+// 响应式
+// ========================================
+
+@media (max-width: 480px) {
+  .container {
+    padding: 16px;
+    background: #fff;
+
+    &::before {
+      display: none;
+    }
+  }
+
+  .card {
+    box-shadow: none;
+    border: none;
+    padding: 24px 20px;
+  }
+}

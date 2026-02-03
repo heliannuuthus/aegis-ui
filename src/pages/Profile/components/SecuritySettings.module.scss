@@ -1,0 +1,145 @@
+@use '@/styles/variables' as *;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: $spacing-12;
+}
+
+.card {
+  border-radius: $radius-md;
+
+  :global {
+    .ant-card-head {
+      border-bottom: 1px solid $border-light;
+    }
+  }
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-weight: $font-medium;
+}
+
+.description {
+  color: $text-secondary;
+  margin: 0;
+}
+
+.credentialInfo {
+  .status {
+    margin: 0 0 $spacing-2 0;
+  }
+
+  .enabled {
+    color: $success-color;
+    font-weight: $font-medium;
+  }
+
+  .lastUsed {
+    color: $text-muted;
+    font-size: $text-sm;
+    margin: 0;
+  }
+}
+
+.credentialList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.credentialItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-3;
+  background: $bg-light;
+  border-radius: $radius-md;
+}
+
+.credentialDetails {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+}
+
+.credentialIcon {
+  font-size: $text-xl;
+  color: $primary-color;
+  margin-top: 2px;
+}
+
+.credentialType {
+  font-weight: $font-medium;
+  margin: 0 0 $spacing-1 0;
+}
+
+.credentialId {
+  font-family: $font-mono;
+  font-size: $text-xs;
+  color: $text-muted;
+  margin: 0 0 $spacing-1 0;
+}
+
+.lastUsed {
+  font-size: $text-xs;
+  color: $text-muted;
+  margin: 0;
+}
+
+// TOTP 设置弹窗
+.totpSetup {
+  text-align: center;
+}
+
+.totpStep {
+  color: $text-secondary;
+  margin: $spacing-4 0 $spacing-2 0;
+  text-align: left;
+}
+
+.qrcode {
+  display: flex;
+  justify-content: center;
+  padding: $spacing-4;
+  background: #fff;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-4;
+}
+
+.secretKey {
+  background: $bg-light;
+  padding: $spacing-3;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-4;
+
+  code {
+    font-family: $font-mono;
+    font-size: $text-sm;
+    word-break: break-all;
+    user-select: all;
+  }
+}
+
+.codeInput {
+  margin-bottom: $spacing-4;
+  text-align: center;
+  font-size: $text-xl;
+  font-family: $font-mono;
+  letter-spacing: 0.5em;
+
+  :global {
+    .ant-input {
+      text-align: center;
+    }
+  }
+}

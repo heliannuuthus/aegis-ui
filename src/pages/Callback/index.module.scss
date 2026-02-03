@@ -1,0 +1,32 @@
+@use '../../styles/variables' as *;
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-md;
+}
+
+.card {
+  width: 100%;
+  max-width: 360px;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-xl;
+  border: none;
+
+  :global(.ant-card-body) {
+    padding: $spacing-xl;
+  }
+}
+
+.loading {
+  text-align: center;
+  padding: $spacing-xl 0;
+
+  p {
+    margin-top: $spacing-lg;
+    color: $text-secondary;
+    font-size: 16px;
+  }
+}

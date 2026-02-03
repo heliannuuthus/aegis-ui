@@ -1,0 +1,798 @@
+// ========================================
+// 隐私政策页面 - 现代简洁风格
+// ========================================
+
+$primary-color: #0066ff;
+$primary-hover: #0052cc;
+$primary-light: #e6f0ff;
+$success-color: #10b981;
+$success-light: #d1fae5;
+$bg-color: #f8fafc;
+$text-primary: #111827;
+$text-secondary: #4b5563;
+$text-muted: #9ca3af;
+$border-color: #e5e7eb;
+
+.container {
+  min-height: 100vh;
+  background: $bg-color;
+  padding: 0;
+}
+
+// ========================================
+// 卡片
+// ========================================
+
+.card {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  background: #fff;
+  min-height: 100vh;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+// ========================================
+// 头部
+// ========================================
+
+.header {
+  padding: 32px 48px;
+  border-bottom: 1px solid $border-color;
+  background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+}
+
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  margin-bottom: 24px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  color: $text-secondary;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #e5e7eb;
+    color: $text-primary;
+  }
+
+  :global(.anticon) {
+    font-size: 12px;
+  }
+}
+
+.headerContent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: $text-primary;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.updateTime {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: $text-muted;
+  margin: 0;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: $text-secondary;
+}
+
+// ========================================
+// 目录导航
+// ========================================
+
+.toc {
+  padding: 24px 48px;
+  background: #fafbfc;
+  border-bottom: 1px solid $border-color;
+}
+
+.tocTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: $text-muted;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 12px;
+}
+
+.tocList {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    button {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 6px 0;
+      background: none;
+      border: none;
+      font-size: 13px;
+      color: $text-secondary;
+      cursor: pointer;
+      transition: color 0.2s ease;
+
+      &:hover {
+        color: $primary-color;
+      }
+    }
+  }
+}
+
+// ========================================
+// 摘要卡片
+// ========================================
+
+.summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 28px 48px;
+  background: linear-gradient(135deg, $success-light 0%, #ecfdf5 100%);
+  border-bottom: 1px solid $border-color;
+}
+
+.summaryIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+  color: $success-color;
+  flex-shrink: 0;
+
+  svg {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+.summaryContent {
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #065f46;
+    margin: 0 0 6px;
+  }
+
+  p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #047857;
+    margin: 0;
+  }
+}
+
+// ========================================
+// 内容区域
+// ========================================
+
+.content {
+  padding: 0 48px 48px;
+}
+
+.section {
+  padding: 40px 0;
+  border-bottom: 1px solid $border-color;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 20px;
+    font-weight: 600;
+    color: $text-primary;
+    margin: 0 0 20px;
+  }
+
+  h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    color: $text-primary;
+    margin: 28px 0 12px;
+
+    &:first-of-type {
+      margin-top: 0;
+    }
+  }
+
+  h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: $text-primary;
+    margin: 0 0 6px;
+  }
+
+  p {
+    font-size: 14px;
+    line-height: 1.75;
+    color: $text-secondary;
+    margin: 0 0 16px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  ul {
+    margin: 16px 0;
+    padding-left: 20px;
+
+    li {
+      font-size: 14px;
+      line-height: 1.75;
+      color: $text-secondary;
+      margin-bottom: 8px;
+
+      strong {
+        color: $text-primary;
+      }
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+
+.sectionNumber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: $primary-light;
+  color: $primary-color;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sectionIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: $primary-color;
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+// ========================================
+// 子章节
+// ========================================
+
+.subsection {
+  margin-top: 24px;
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+.subsectionBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: $text-secondary;
+}
+
+// ========================================
+// 数据表格
+// ========================================
+
+.dataTable {
+  margin: 16px 0;
+  border: 1px solid $border-color;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.dataRow {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  border-bottom: 1px solid $border-color;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.dataType {
+  padding: 14px 16px;
+  background: #f9fafb;
+  font-size: 13px;
+  font-weight: 600;
+  color: $text-primary;
+  border-right: 1px solid $border-color;
+}
+
+.dataDesc {
+  padding: 14px 16px;
+  font-size: 13px;
+  color: $text-secondary;
+  line-height: 1.5;
+}
+
+// ========================================
+// 特殊样式
+// ========================================
+
+.highlight {
+  padding: 20px;
+  background: #fef3c7;
+  border-radius: 12px;
+  border-left: 4px solid #f59e0b;
+  margin: 16px 0;
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: #92400e;
+  }
+}
+
+.note {
+  font-size: 13px !important;
+  color: $text-muted !important;
+  font-style: italic;
+}
+
+.importantNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 20px;
+  background: $primary-light;
+  border-radius: 12px;
+  margin-bottom: 20px;
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: #1e40af;
+
+    strong {
+      color: #1e3a8a;
+    }
+  }
+}
+
+.noteIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $primary-color;
+  flex-shrink: 0;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.shareList {
+  list-style: none !important;
+  padding: 0 !important;
+
+  li {
+    position: relative;
+    padding: 12px 16px 12px 44px !important;
+    margin-bottom: 12px !important;
+    background: #f9fafb;
+    border-radius: 8px;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 16px;
+      top: 18px;
+      width: 8px;
+      height: 8px;
+      background: $primary-color;
+      border-radius: 50%;
+    }
+  }
+}
+
+// ========================================
+// 用途网格
+// ========================================
+
+.purposeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.purposeCard {
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 1px solid $border-color;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  h4 {
+    margin-top: 12px;
+  }
+
+  p {
+    font-size: 13px;
+    margin: 0;
+  }
+}
+
+.purposeIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: $primary-light;
+  border-radius: 10px;
+  color: $primary-color;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+// ========================================
+// 安全网格
+// ========================================
+
+.securityGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.securityItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: $success-light;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #065f46;
+}
+
+.securityIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #fff;
+  border-radius: 8px;
+  color: $success-color;
+  flex-shrink: 0;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+// ========================================
+// 权利网格
+// ========================================
+
+.rightsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.rightItem {
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 1px solid $border-color;
+
+  h4 {
+    color: $primary-color;
+  }
+
+  p {
+    font-size: 13px;
+    margin: 0;
+  }
+}
+
+// ========================================
+// 联系卡片
+// ========================================
+
+.contactCard {
+  margin-top: 20px;
+  padding: 24px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 12px;
+  border: 1px solid $border-color;
+}
+
+.contactItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.contactIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: $primary-light;
+  border-radius: 12px;
+  color: $primary-color;
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.contactInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.contactLabel {
+  font-size: 12px;
+  color: $text-muted;
+  font-weight: 500;
+}
+
+.contactValue {
+  font-size: 16px;
+  font-weight: 500;
+  color: $primary-color;
+  text-decoration: none;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: $primary-hover;
+  }
+}
+
+.responseTime {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  font-size: 13px !important;
+  color: $text-secondary !important;
+
+  strong {
+    color: $primary-color;
+  }
+}
+
+// ========================================
+// 页脚
+// ========================================
+
+.footer {
+  padding: 24px 48px;
+  border-top: 1px solid $border-color;
+  text-align: center;
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    color: $text-muted;
+  }
+}
+
+.footerLinks {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+
+  a {
+    color: $text-secondary;
+    text-decoration: none;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: $primary-color;
+    }
+  }
+
+  span:not(.divider) {
+    color: $text-muted;
+  }
+}
+
+.divider {
+  color: $text-muted;
+}
+
+// ========================================
+// 响应式
+// ========================================
+
+@media (max-width: 768px) {
+  .header {
+    padding: 24px;
+  }
+
+  .title {
+    font-size: 26px;
+  }
+
+  .toc {
+    padding: 20px 24px;
+  }
+
+  .tocList {
+    grid-template-columns: 1fr;
+  }
+
+  .summary {
+    padding: 24px;
+  }
+
+  .content {
+    padding: 0 24px 32px;
+  }
+
+  .section {
+    padding: 32px 0;
+  }
+
+  .dataRow {
+    grid-template-columns: 100px 1fr;
+  }
+
+  .purposeGrid,
+  .securityGrid,
+  .rightsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .contactCard {
+    padding: 20px;
+  }
+
+  .footer {
+    padding: 20px 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 20px;
+  }
+
+  .backButton {
+    margin-bottom: 20px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .toc {
+    padding: 16px 20px;
+  }
+
+  .summary {
+    flex-direction: column;
+    padding: 20px;
+    gap: 16px;
+  }
+
+  .content {
+    padding: 0 20px 24px;
+  }
+
+  .section {
+    padding: 24px 0;
+
+    h2 {
+      font-size: 18px;
+    }
+  }
+
+  .dataTable {
+    border-radius: 8px;
+  }
+
+  .dataRow {
+    grid-template-columns: 1fr;
+  }
+
+  .dataType {
+    border-right: none;
+    border-bottom: 1px solid $border-color;
+  }
+
+  .purposeCard {
+    padding: 16px;
+  }
+
+  .contactCard {
+    padding: 16px;
+  }
+
+  .contactIcon {
+    width: 40px;
+    height: 40px;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  .contactValue {
+    font-size: 14px;
+  }
+
+  .footer {
+    padding: 16px 20px;
+  }
+}
