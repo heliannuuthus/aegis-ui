@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button, Spin, Avatar } from 'antd';
 import { LoadingOutlined, UserOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+
 import clsx from 'clsx';
 import api from '@/services/api';
 import { showError, isFlowExpiredError, restartAuthFlow } from '@/utils/error';
@@ -69,7 +69,7 @@ const scopeConfig: Record<string, { icon: React.ReactNode; description: string }
 };
 
 function ConsentPage() {
-  const navigate = useNavigate();
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [consentInfo, setConsentInfo] = useState<ConsentInfo | null>(null);
@@ -99,7 +99,8 @@ function ConsentPage() {
       }
     };
     fetchConsentInfo();
-  }, [navigate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 处理授权
   const handleConsent = async () => {

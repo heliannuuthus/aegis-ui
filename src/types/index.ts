@@ -5,7 +5,7 @@
  * 适用于所有类型：IDP、VChan、MFA
  *
  * 字段说明：
- * - connection: 标识（github, google, wechat:mp, user, oper, email_otp, captcha:turnstile...）
+ * - connection: 标识（github, google, wechat-mp, user, oper, email_otp, captcha-turnstile...）
  * - identifier: 公开标识（client_id / site_key / rp_id）
  * - strategy: 登录策略（仅 user/oper 需要：password）
  * - delegate: 委托验证方式（可替代 strategy 的 MFA：email_otp, webauthn）
@@ -39,8 +39,8 @@ export type MFAConfig = ConnectionConfig;
 /**
  * Connections Map（按类别分类）
  *
- * - IDP: 身份提供商（github, google, user, oper, wechat:mp...）
- * - VChan: 验证渠道/前置验证（captcha:turnstile...）
+ * - IDP: 身份提供商（github, google, user, oper, wechat-mp...）
+ * - VChan: 验证渠道/前置验证（captcha-turnstile...）
  * - MFA: 多因素认证方式（email_otp, webauthn...），delegate 引用的配置
  */
 export interface ConnectionsMap {

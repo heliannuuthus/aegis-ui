@@ -16,8 +16,8 @@ import styles from './LinkedAccounts.module.scss';
 const idpConfig: Record<string, { icon: React.ReactNode; name: string; color: string }> = {
   github: { icon: <GithubOutlined />, name: 'GitHub', color: '#24292e' },
   google: { icon: <GoogleOutlined />, name: 'Google', color: '#4285f4' },
-  'wechat:mp': { icon: <WechatOutlined />, name: '微信', color: '#07c160' },
-  'alipay:mp': { icon: <AlipayCircleOutlined />, name: '支付宝', color: '#1677ff' },
+  'wechat-mp': { icon: <WechatOutlined />, name: '微信', color: '#07c160' },
+  'alipay-mp': { icon: <AlipayCircleOutlined />, name: '支付宝', color: '#1677ff' },
 };
 
 const LinkedAccounts = () => {

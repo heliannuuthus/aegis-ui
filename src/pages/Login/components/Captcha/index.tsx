@@ -42,8 +42,8 @@ const Captcha = ({ config, onTokenChange, className }: CaptchaProps) => {
   const widgetIdRef = useRef<string | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // 从 connection 解析 captcha 类型（格式：captcha:provider，如 captcha:turnstile）
-  const captchaType = config.connection.split(':')[1] || '';
+  // 从 connection 解析 captcha 类型（格式：captcha-provider，如 captcha-turnstile）
+  const captchaType = config.connection.split('-').slice(1).join('-') || '';
   const isTurnstile = captchaType === 'turnstile';
 
   // 初始化 Turnstile

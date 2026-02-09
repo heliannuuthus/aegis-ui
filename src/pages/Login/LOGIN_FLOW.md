@@ -32,7 +32,7 @@
   ],
   "vchan": [
     {
-      "connection": "captcha:turnstile",
+      "connection": "captcha-turnstile",
       "identifier": "0x4AAAAAAA..."
     }
   ],
@@ -134,7 +134,7 @@ const operConfig = connections.idp.find(c => c.connection === 'oper');
 
 // 2. 检查前置验证（captcha）
 if ((operConfig.require ?? []).includes('captcha')) {
-  const captchaConfig = connections.vchan.find(c => c.connection.startsWith('captcha:'));
+  const captchaConfig = connections.vchan.find(c => c.connection.startsWith('captcha-'));
   // 使用 captchaConfig.identifier (site_key) 初始化 Turnstile/reCAPTCHA
 }
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Spin, message } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import clsx from 'clsx';
 import {
   getConnections,
@@ -36,7 +36,6 @@ import styles from './index.module.scss';
 
 const LoginPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [authContext, setAuthContext] = useState<AuthContext | null>(null);
   const [connections, setConnections] = useState<ConnectionsMap>({});
@@ -87,13 +86,14 @@ const LoginPage = () => {
       }
     };
     fetchData();
-  }, [navigate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const handleLoginSuccess = (response: LoginResponse) => {
+  const handleLoginSuccess = useCallback((response: LoginResponse) => {
     if (response.redirect_uri) {
       window.location.href = response.redirect_uri;
     }
-  };
+  }, []);
 
   const handleLogin = async (
     connection: string,
@@ -217,9 +217,9 @@ const LoginPage = () => {
       !(c.strategy ?? []).includes('mp')
   );
 
-  // Captcha 配置（connection 格式为 captcha:provider，如 captcha:turnstile）
+  // Captcha 配置（connection 格式为 captcha-provider，如 captcha-turnstile）
   const captchaConfig: VChanConfig | undefined = (connections.vchan ?? []).find(
-    (c) => c.connection.startsWith('captcha:')
+    (c) => c.connection.startsWith('captcha-')
   );
 
   // 页面级 Conditional UI：在浏览器自动填充中显示 Passkey 选项
@@ -277,7 +277,7 @@ const LoginPage = () => {
       abortController.abort();
       conditionalAbortRef.current = null;
     };
-  }, [shouldPageHandlePasskey, loading]);
+  }, [shouldPageHandlePasskey, loading, handleLoginSuccess]);
 
   // 手动点击 Passkey 按钮登录（模态弹窗模式）
   const handleManualPasskeyLogin = useCallback(async () => {
@@ -321,7 +321,7 @@ const LoginPage = () => {
       setLoginLoading(false);
       setActiveConnection(null);
     }
-  }, []);
+  }, [handleLoginSuccess]);
 
   const hasConnections =
     idpConnections.length > 0 ||
