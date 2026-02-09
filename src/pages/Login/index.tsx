@@ -1,10 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Spin, message } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
-import { getConnections, getAuthContext, login, continueChallenge } from '@/services/api';
-import { showError, shouldRedirectToError, getErrorMessage } from '@/utils/error';
+import {
+  getConnections,
+  getAuthContext,
+  login,
+  continueChallenge,
+  initiateWebAuthnChallenge,
+  verifyWebAuthnCredential,
+} from '@/services/api';
+import { showError, isFlowExpiredError, restartAuthFlow, getErrorMessage } from '@/utils/error';
 import type {
   ConnectionsMap,
   ConnectionConfig,
@@ -15,9 +22,16 @@ import type {
   AuthContext,
 } from '@/types';
 import IDPButton from './components/IDPButton';
-import EmailLogin from './components/EmailLogin';
 import ChallengeVerify from './components/ChallengeVerify';
 import OperLogin from './components/oper';
+import Passkey from './components/Passkey';
+import { isWebAuthnSupported, isConditionalUISupported } from './components/WebAuthn';
+import {
+  convertToPublicKeyOptions,
+  convertAssertionResponse,
+  performWebAuthnAssertion,
+  performConditionalMediation,
+} from './components/WebAuthn/utils';
 import styles from './index.module.scss';
 
 const LoginPage = () => {
@@ -30,17 +44,19 @@ const LoginPage = () => {
   const [activeConnection, setActiveConnection] = useState<string | null>(null);
   const [challenge, setChallenge] = useState<ChallengeResponse | null>(null);
 
-  // 处理 URL 中的错误参数（来自 Callback 页面或其他页面的重定向）
+  // Conditional UI (Passkey 自动填充) 的 AbortController
+  const conditionalAbortRef = useRef<AbortController | null>(null);
+
+  // 处理 URL 中的错误参数（来自 OAuth 回调失败等场景）
   useEffect(() => {
     const errorCode = searchParams.get('error');
     const errorDesc = searchParams.get('error_description');
 
     if (errorCode) {
-      // 用 message 显示错误
       const errorMessage = errorDesc || getErrorMessage(errorCode);
       message.error(errorMessage);
 
-      // 清除 URL 中的错误参数，保留其他参数
+      // 清除 URL 中的错误参数
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('error');
       newParams.delete('error_description');
@@ -61,11 +77,11 @@ const LoginPage = () => {
       } catch (error) {
         console.error('获取登录信息失败:', error);
         const err = error as AuthError;
-        if (shouldRedirectToError(err)) {
-          navigate(`/error?error=${err.error}&error_description=${encodeURIComponent(err.error_description || '')}`);
-        } else {
-          showError(error);
+        if (isFlowExpiredError(err)) {
+          restartAuthFlow();
+          return;
         }
+        showError(error);
       } finally {
         setLoading(false);
       }
@@ -105,11 +121,11 @@ const LoginPage = () => {
       }
     } catch (error: unknown) {
       const err = error as AuthError;
-      if (shouldRedirectToError(err)) {
-        navigate(`/error?error=${err.error}&error_description=${encodeURIComponent(err.error_description || '')}`);
-      } else {
-        showError(error);
+      if (isFlowExpiredError(err)) {
+        restartAuthFlow();
+        return;
       }
+      showError(error);
     } finally {
       setLoginLoading(false);
       setActiveConnection(null);
@@ -166,6 +182,12 @@ const LoginPage = () => {
   // 分离 oper 连接单独处理
   const operConnection = (connections.idp ?? []).find((c) => c.connection === 'oper');
 
+  // 独立 Passkey IDP 连接
+  const passkeyConnection = useMemo(
+    () => (connections.idp ?? []).find((c) => c.connection === 'passkey'),
+    [connections]
+  );
+
   // 检查 oper 是否应该显示（strategy 非空 或 有有效的 delegate）
   const shouldShowOper =
     operConnection &&
@@ -174,21 +196,25 @@ const LoginPage = () => {
         (connections.mfa ?? []).some((m) => m.connection === mfa)
       ));
 
-  // 需要邮箱输入的连接类型（仅 email 类型，没有 delegate 配置的 user）
-  // 排除 oper，因为 oper 由 OperLogin 组件处理
-  const emailConnections: ConnectionConfig[] = (connections.idp ?? []).filter(
-    (c) =>
-      c.connection === 'email' ||
-      (c.connection === 'user' && (!c.delegate || c.delegate.length === 0))
-  );
+  // oper 是否已经处理 Passkey（有 passkey delegate 且 mfa 中有 passkey）
+  const operHandlesPasskey =
+    shouldShowOper &&
+    (operConnection?.delegate ?? []).includes('passkey') &&
+    (connections.mfa ?? []).some((m) => m.connection === 'passkey');
+
+  // 页面级是否需要处理独立 Passkey IDP（oper 不处理时才由页面处理）
+  const shouldPageHandlePasskey =
+    !!passkeyConnection && !operHandlesPasskey && isWebAuthnSupported();
 
   // IDP 连接（社交登录按钮）
-  // 排除 oper（由 OperLogin 组件处理）和 emailConnections 中的连接
+  // 排除 oper（由 OperLogin 组件处理）、passkey（单独处理）、email 和无 delegate 的 user（由 oper 统一处理）
   const idpConnections: ConnectionConfig[] = (connections.idp ?? []).filter(
     (c) =>
       c.connection !== 'oper' &&
-      !(c.strategy ?? []).includes('mp') &&
-      !emailConnections.some((ec) => ec.connection === c.connection)
+      c.connection !== 'passkey' &&
+      c.connection !== 'email' &&
+      !(c.connection === 'user' && (!c.delegate || c.delegate.length === 0)) &&
+      !(c.strategy ?? []).includes('mp')
   );
 
   // Captcha 配置（connection 格式为 captcha:provider，如 captcha:turnstile）
@@ -196,8 +222,111 @@ const LoginPage = () => {
     (c) => c.connection.startsWith('captcha:')
   );
 
+  // 页面级 Conditional UI：在浏览器自动填充中显示 Passkey 选项
+  useEffect(() => {
+    if (!shouldPageHandlePasskey || loading) return;
+
+    const abortController = new AbortController();
+    conditionalAbortRef.current = abortController;
+
+    const startConditionalUI = async () => {
+      const supported = await isConditionalUISupported();
+      if (!supported || abortController.signal.aborted) return;
+
+      try {
+        const challengeResp = await initiateWebAuthnChallenge('');
+        if (abortController.signal.aborted) return;
+
+        const publicKeyOptions = convertToPublicKeyOptions(challengeResp.options);
+        const credential = await performConditionalMediation(
+          publicKeyOptions,
+          abortController.signal
+        );
+        if (abortController.signal.aborted) return;
+
+        const assertionResponse = convertAssertionResponse(credential);
+        const verifyResponse = await verifyWebAuthnCredential(
+          challengeResp.challenge_id,
+          assertionResponse
+        );
+
+        if (!verifyResponse.verified || !verifyResponse.challenge_token) {
+          throw new Error('验证失败');
+        }
+
+        // 使用 passkey 连接完成登录
+        const loginResponse = await login({
+          connection: 'passkey',
+          proof: verifyResponse.challenge_token,
+        });
+
+        if (loginResponse.challenge) {
+          setChallenge(loginResponse.challenge);
+        } else {
+          handleLoginSuccess(loginResponse);
+        }
+      } catch (error) {
+        if (abortController.signal.aborted) return;
+        console.debug('Page conditional UI:', error);
+      }
+    };
+
+    startConditionalUI();
+
+    return () => {
+      abortController.abort();
+      conditionalAbortRef.current = null;
+    };
+  }, [shouldPageHandlePasskey, loading]);
+
+  // 手动点击 Passkey 按钮登录（模态弹窗模式）
+  const handleManualPasskeyLogin = useCallback(async () => {
+    // 终止正在运行的 Conditional UI
+    conditionalAbortRef.current?.abort();
+    conditionalAbortRef.current = null;
+
+    setLoginLoading(true);
+    setActiveConnection('passkey');
+    try {
+      const challengeResp = await initiateWebAuthnChallenge('');
+      const publicKeyOptions = convertToPublicKeyOptions(challengeResp.options);
+      const credential = await performWebAuthnAssertion(publicKeyOptions);
+      const assertionResponse = convertAssertionResponse(credential);
+      const verifyResponse = await verifyWebAuthnCredential(
+        challengeResp.challenge_id,
+        assertionResponse
+      );
+
+      if (!verifyResponse.verified || !verifyResponse.challenge_token) {
+        throw new Error('验证失败');
+      }
+
+      const loginResponse = await login({
+        connection: 'passkey',
+        proof: verifyResponse.challenge_token,
+      });
+
+      if (loginResponse.challenge) {
+        setChallenge(loginResponse.challenge);
+      } else {
+        handleLoginSuccess(loginResponse);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.name !== 'NotAllowedError' && !error.message.includes('cancel')) {
+          showError(error);
+        }
+      }
+    } finally {
+      setLoginLoading(false);
+      setActiveConnection(null);
+    }
+  }, []);
+
   const hasConnections =
-    idpConnections.length > 0 || emailConnections.length > 0 || shouldShowOper;
+    idpConnections.length > 0 ||
+    shouldShowOper ||
+    shouldPageHandlePasskey;
 
   if (loading) {
     return (
@@ -259,7 +388,25 @@ const LoginPage = () => {
 
         {/* 登录内容 */}
         <div className={styles.content}>
-          {/* Oper 登录（运营账号） */}
+          {/* 独立指纹/面容登录（非 oper delegate，优先展示） */}
+          {shouldPageHandlePasskey && (
+            <div className={styles.formSection}>
+              <Passkey
+                onClick={handleManualPasskeyLogin}
+                loading={loginLoading && activeConnection === 'passkey'}
+                disabled={loginLoading}
+              />
+            </div>
+          )}
+
+          {/* 分隔线 - 指纹/面容和 Oper 之间 */}
+          {shouldPageHandlePasskey && shouldShowOper && (
+            <div className={styles.divider}>
+              <span>或</span>
+            </div>
+          )}
+
+          {/* Oper 登录（邮箱 + 验证方式） */}
           {shouldShowOper && operConnection && (
             <div className={styles.formSection}>
               <OperLogin
@@ -274,33 +421,8 @@ const LoginPage = () => {
             </div>
           )}
 
-          {/* 分隔线 - Oper 和其他登录方式之间 */}
-          {shouldShowOper && (emailConnections.length > 0 || idpConnections.length > 0) && (
-            <div className={styles.divider}>
-              <span>或</span>
-            </div>
-          )}
-
-          {/* 邮箱登录（user 和 email 类型） */}
-          {emailConnections.length > 0 && (
-            <div className={styles.formSection}>
-              {emailConnections.map((conn) => (
-                <EmailLogin
-                  key={conn.connection}
-                  connection={conn}
-                  captchaConfig={captchaConfig}
-                  loading={loginLoading && activeConnection === conn.connection}
-                  disabled={loginLoading}
-                  onLogin={(principal, proof) =>
-                    handleLogin(conn.connection, { principal, proof })
-                  }
-                />
-              ))}
-            </div>
-          )}
-
-          {/* 分隔线 - 邮箱登录和社交登录之间 */}
-          {emailConnections.length > 0 && idpConnections.length > 0 && (
+          {/* 分隔线 - Oper 和社交登录之间 */}
+          {(shouldShowOper || shouldPageHandlePasskey) && idpConnections.length > 0 && (
             <div className={styles.divider}>
               <span>或</span>
             </div>

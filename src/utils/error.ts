@@ -88,24 +88,30 @@ export function showWarning(error: AuthError | unknown): void {
 }
 
 /**
- * 判断是否需要重定向到错误页面
- * 某些错误适合通过 message 提示，某些错误需要跳转到错误页面
+ * 判断是否为认证流程（flow）过期类错误
  */
-export function shouldRedirectToError(error: AuthError): boolean {
-  const redirectErrors = [
-    'flow_not_found',
-    'flow_expired',
-    'flow_invalid',
-    'client_not_found',
-    'service_not_found',
-    'no_connection_available',
-  ];
-  return redirectErrors.includes(error.error);
+export function isFlowExpiredError(error: AuthError): boolean {
+  return ['flow_not_found', 'flow_expired', 'flow_invalid'].includes(error.error);
+}
+
+/**
+ * 重新发起认证流程
+ * 从 sessionStorage 读取原始 authorize URL 并跳转，重建 flow
+ * @returns 是否成功跳转（false 表示没有保存的 authorize URL）
+ */
+export function restartAuthFlow(): boolean {
+  const authorizeUrl = sessionStorage.getItem('authorize_url');
+  if (authorizeUrl) {
+    window.location.href = authorizeUrl;
+    return true;
+  }
+  return false;
 }
 
 export default {
   getErrorMessage,
   showError,
   showWarning,
-  shouldRedirectToError,
+  isFlowExpiredError,
+  restartAuthFlow,
 };

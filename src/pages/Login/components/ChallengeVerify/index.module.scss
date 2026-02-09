@@ -227,6 +227,33 @@ $primary-color: #0066ff;
   }
 }
 
+// 打开邮箱快捷按钮
+.emailShortcut {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.emailShortcutLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: $primary-color;
+  background: #f0f7ff;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #dbeafe;
+    border-color: #bfdbfe;
+    color: #0052cc;
+  }
+}
+
 // 帮助提示
 .helpText {
   font-size: 12px;

@@ -60,6 +60,25 @@ export const isConditionalUISupported = async (): Promise<boolean> => {
 };
 
 /**
+ * 检查设备是否有平台认证器（指纹/面容/PIN 等）
+ *
+ * 用于判断是否展示"使用指纹或面容登录"按钮。
+ * 注意：这只能判断设备能力，不能判断用户是否已注册 Passkey。
+ * 是否已注册是隐私保护设计，无法在认证前检测。
+ */
+export const isPlatformAuthenticatorAvailable = async (): Promise<boolean> => {
+  if (!isWebAuthnSupported()) return false;
+  try {
+    return (
+      typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function' &&
+      (await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())
+    );
+  } catch {
+    return false;
+  }
+};
+
+/**
  * 将服务端的 WebAuthn 选项转换为浏览器 API 格式
  */
 export const convertToPublicKeyOptions = (
@@ -99,13 +118,38 @@ export const convertAssertionResponse = (
 };
 
 /**
- * 执行 WebAuthn 认证
+ * 执行 WebAuthn 认证（模态弹窗模式）
  */
 export const performWebAuthnAssertion = async (
   options: PublicKeyCredentialRequestOptions
 ): Promise<PublicKeyCredential> => {
   const credential = await navigator.credentials.get({
     publicKey: options,
+  });
+  if (!credential) {
+    throw new Error('WebAuthn 认证被取消');
+  }
+  return credential as PublicKeyCredential;
+};
+
+/**
+ * 执行 WebAuthn 条件式认证（Conditional UI / Passkey 自动填充）
+ *
+ * 不会弹出模态对话框，而是在浏览器输入框的自动填充下拉中显示 Passkey 选项。
+ * 需要页面中存在带有 autocomplete="...webauthn" 属性的 input 元素。
+ * 用户从自动填充中选择 Passkey 后触发设备认证（指纹/面容等）。
+ *
+ * @param options WebAuthn 请求选项
+ * @param signal 可选的 AbortSignal，用于取消等待中的条件式认证
+ */
+export const performConditionalMediation = async (
+  options: PublicKeyCredentialRequestOptions,
+  signal?: AbortSignal
+): Promise<PublicKeyCredential> => {
+  const credential = await navigator.credentials.get({
+    publicKey: options,
+    mediation: 'conditional' as CredentialMediationRequirement,
+    signal,
   });
   if (!credential) {
     throw new Error('WebAuthn 认证被取消');

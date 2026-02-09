@@ -106,4 +106,4 @@ const WebAuthn = ({
 };
 
 export default WebAuthn;
-export { isWebAuthnSupported, isConditionalUISupported } from './utils';
+export { isWebAuthnSupported, isConditionalUISupported, isPlatformAuthenticatorAvailable } from './utils';

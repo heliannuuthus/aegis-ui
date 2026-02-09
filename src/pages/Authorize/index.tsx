@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, Spin } from 'antd';
 import api from '@/services/api';
-import { showError, shouldRedirectToError } from '@/utils/error';
+import { isFlowExpiredError, restartAuthFlow, getErrorMessage } from '@/utils/error';
 import type { AuthError } from '@/types';
 import styles from './index.module.scss';
 
@@ -28,6 +28,9 @@ const AuthorizePage = () => {
 
   useEffect(() => {
     const initiateAuthorize = async () => {
+      // 保存完整的 authorize URL，用于 flow 过期后重新发起
+      sessionStorage.setItem('authorize_url', window.location.href);
+
       // 获取必要参数
       const clientId = searchParams.get('client_id');
       const audience = searchParams.get('audience');
@@ -93,14 +96,10 @@ const AuthorizePage = () => {
         const authError = err as AuthError;
         console.error('授权请求失败:', authError);
 
-        if (shouldRedirectToError(authError)) {
-          navigate(
-            `/error?error=${authError.error}&error_description=${encodeURIComponent(authError.error_description || '')}`
-          );
+        if (isFlowExpiredError(authError)) {
+          restartAuthFlow();
         } else {
-          showError(err);
-          // 授权失败，跳转到登录页让用户重试
-          navigate(`/login?${searchParams.toString()}`);
+          setError(authError.error_description || getErrorMessage(authError));
         }
       } finally {
         setLoading(false);

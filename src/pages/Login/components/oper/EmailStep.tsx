@@ -11,26 +11,26 @@ interface EmailStepProps {
   captchaConfig?: VChanConfig;
   /** 是否需要 Captcha */
   requiresCaptcha: boolean;
-  /** 是否支持 Passkey */
-  hasPasskey: boolean;
+  /** 是否支持 WebAuthn（指纹/面容/安全密钥） */
+  hasWebAuthn: boolean;
   /** 是否正在加载 */
   loading?: boolean;
   /** 是否禁用 */
   disabled?: boolean;
   /** 提交回调 */
   onSubmit: (email: string, captchaToken?: string) => void;
-  /** Passkey 点击回调 */
-  onPasskeyClick: () => void;
+  /** 指纹/面容登录点击回调 */
+  onWebAuthnClick: () => void;
 }
 
 const EmailStep = ({
   captchaConfig,
   requiresCaptcha,
-  hasPasskey,
+  hasWebAuthn,
   loading = false,
   disabled = false,
   onSubmit,
-  onPasskeyClick,
+  onWebAuthnClick,
 }: EmailStepProps) => {
   const [form] = Form.useForm();
   const [captchaToken, setCaptchaToken] = useState<string>();
@@ -57,7 +57,7 @@ const EmailStep = ({
   };
 
   return (
-    <div className={styles.stepContainer}>
+    <div>
       <Form
         form={form}
         layout="vertical"
@@ -107,14 +107,14 @@ const EmailStep = ({
         </Form.Item>
       </Form>
 
-      {/* Passkey 选项 */}
-      {hasPasskey && (
+      {/* 指纹/面容登录 */}
+      {hasWebAuthn && (
         <>
           <div className={styles.divider}>
             <span>或</span>
           </div>
           <Passkey
-            onClick={onPasskeyClick}
+            onClick={onWebAuthnClick}
             loading={false}
             disabled={disabled || loading}
           />

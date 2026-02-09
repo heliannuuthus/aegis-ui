@@ -46,6 +46,41 @@ const challengeHints: Record<string, string> = {
   totp: '请打开验证器应用获取动态口令',
 };
 
+// 常见邮箱域名到 Web 客户端的映射
+const emailProviders: Record<string, { name: string; url: string }> = {
+  'gmail.com': { name: 'Gmail', url: 'https://mail.google.com' },
+  'googlemail.com': { name: 'Gmail', url: 'https://mail.google.com' },
+  'outlook.com': { name: 'Outlook', url: 'https://outlook.live.com' },
+  'hotmail.com': { name: 'Outlook', url: 'https://outlook.live.com' },
+  'live.com': { name: 'Outlook', url: 'https://outlook.live.com' },
+  'yahoo.com': { name: 'Yahoo Mail', url: 'https://mail.yahoo.com' },
+  'qq.com': { name: 'QQ 邮箱', url: 'https://mail.qq.com' },
+  'foxmail.com': { name: 'QQ 邮箱', url: 'https://mail.qq.com' },
+  '163.com': { name: '网易邮箱', url: 'https://mail.163.com' },
+  '126.com': { name: '网易邮箱', url: 'https://mail.126.com' },
+  'yeah.net': { name: '网易邮箱', url: 'https://mail.yeah.net' },
+  'icloud.com': { name: 'iCloud', url: 'https://www.icloud.com/mail' },
+  'me.com': { name: 'iCloud', url: 'https://www.icloud.com/mail' },
+};
+
+// 根据邮箱地址获取邮箱提供商快捷链接
+const getEmailProvider = (email: string): React.ReactNode => {
+  const domain = email.split('@')[1]?.toLowerCase();
+  if (!domain) return null;
+  const provider = emailProviders[domain];
+  if (!provider) return null;
+  return (
+    <a
+      href={provider.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={styles.emailShortcutLink}
+    >
+      打开 {provider.name}
+    </a>
+  );
+};
+
 const CODE_LENGTH = 6;
 
 const ChallengeVerify = ({
@@ -254,6 +289,13 @@ const ChallengeVerify = ({
       >
         {loading ? '验证中...' : '验证'}
       </Button>
+
+      {/* 打开邮箱快捷按钮 */}
+      {challenge.type === 'email_otp' && challenge.principal && (
+        <div className={styles.emailShortcut}>
+          {getEmailProvider(challenge.principal)}
+        </div>
+      )}
 
       {/* 帮助提示 */}
       <p className={styles.helpText}>

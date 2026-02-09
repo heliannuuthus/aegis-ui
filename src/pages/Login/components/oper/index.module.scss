@@ -7,18 +7,34 @@ $primary-hover: #0052cc;
   width: 100%;
 }
 
+// 步骤容器 - 支持前进/后退动画
 .stepContainer {
-  animation: fadeIn 0.3s ease;
+  animation: slideInRight 0.3s ease;
 }
 
-@keyframes fadeIn {
+.stepContainerBack {
+  animation: slideInLeft 0.3s ease;
+}
+
+@keyframes slideInRight {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateX(40px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 

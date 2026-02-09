@@ -44,7 +44,7 @@ const Passkey = ({
       ) : (
         <PasskeyIcon className={styles.icon} />
       )}
-      <span className={styles.text}>使用 Passkey 登录</span>
+      <span className={styles.text}>使用指纹或面容登录</span>
     </button>
   );
 };

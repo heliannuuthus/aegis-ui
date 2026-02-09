@@ -3,7 +3,6 @@ import HomePage from './pages/Home/index.tsx';
 import AuthorizePage from './pages/Authorize/index.tsx';
 import LoginPage from './pages/Login/index.tsx';
 import ConsentPage from './pages/Consent/index.tsx';
-import ErrorPage from './pages/Error/index.tsx';
 import CallbackPage from './pages/Callback/index.tsx';
 import TermsPage from './pages/Terms/index.tsx';
 import PrivacyPage from './pages/Privacy/index.tsx';
@@ -16,8 +15,7 @@ function App() {
       <Route path="/authorize" element={<AuthorizePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/consent" element={<ConsentPage />} />
-      <Route path="/error" element={<ErrorPage />} />
-      <Route path="/auth/:connection/callback" element={<CallbackPage />} />
+      <Route path="/:connection/callback" element={<CallbackPage />} />
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
       <Route path="/profile" element={<ProfilePage />} />

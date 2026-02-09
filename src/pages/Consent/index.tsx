@@ -4,7 +4,7 @@ import { LoadingOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import api from '@/services/api';
-import { showError, shouldRedirectToError } from '@/utils/error';
+import { showError, isFlowExpiredError, restartAuthFlow } from '@/utils/error';
 import type { AuthError } from '@/types';
 import styles from './index.module.scss';
 
@@ -89,11 +89,11 @@ function ConsentPage() {
         setSelectedScopes(requiredScopes);
       } catch (error: unknown) {
         const err = error as AuthError;
-        if (shouldRedirectToError(err)) {
-          navigate(`/error?error=${err.error}&error_description=${encodeURIComponent(err.error_description || '')}`);
-        } else {
-          showError(error);
+        if (isFlowExpiredError(err)) {
+          restartAuthFlow();
+          return;
         }
+        showError(error);
       } finally {
         setLoading(false);
       }

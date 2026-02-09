@@ -32,6 +32,86 @@ const strategyNames: Record<string, string> = {
   oa: '公众号',
 };
 
+// OAuth 配置（公开信息，前端硬编码）
+const oauthConfigs: Record<string, { authorizeUrl: string; scope: string }> = {
+  github: {
+    authorizeUrl: 'https://github.com/login/oauth/authorize',
+    scope: 'user:email',
+  },
+  google: {
+    authorizeUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
+    scope: 'openid email profile',
+  },
+  // 微信开放平台（扫码登录）
+  wechat: {
+    authorizeUrl: 'https://open.weixin.qq.com/connect/qrconnect',
+    scope: 'snsapi_login',
+  },
+  // 飞书
+  feishu: {
+    authorizeUrl: 'https://open.feishu.cn/open-apis/authen/v1/authorize',
+    scope: '',
+  },
+  // 支付宝
+  alipay: {
+    authorizeUrl: 'https://openauth.alipay.com/oauth2/publicAppAuthorize.htm',
+    scope: 'auth_user',
+  },
+  // 抖音
+  douyin: {
+    authorizeUrl: 'https://open.douyin.com/platform/oauth/connect',
+    scope: 'user_info',
+  },
+};
+
+// 生成随机 state（用于 CSRF 防护）
+const generateState = (): string => {
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+  return Array.from(array, (b) => b.toString(16).padStart(2, '0')).join('');
+};
+
+// 获取回调 URL 基础地址
+const getCallbackBaseUrl = (): string => {
+  return import.meta.env.VITE_API_BASE_URL || window.location.origin;
+};
+
+// 构建 OAuth 授权 URL
+const buildOAuthURL = (connection: string, clientId: string): string => {
+  const config = oauthConfigs[connection];
+  if (!config || !clientId) return '';
+
+  // 生成并存储 state（用于回调验证）
+  const state = generateState();
+  sessionStorage.setItem('oauth_state', state);
+
+  // redirect_uri 使用路径参数: /{connection}/callback
+  const redirectUri = `${getCallbackBaseUrl()}/${connection}/callback`;
+
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    scope: config.scope,
+    state: state,
+    response_type: 'code',
+  });
+
+  // Google 需要额外参数
+  if (connection === 'google') {
+    params.set('access_type', 'offline');
+    params.set('prompt', 'consent');
+  }
+
+  // 微信需要特殊处理
+  if (connection === 'wechat') {
+    params.set('appid', clientId);
+    params.delete('client_id');
+    return `${config.authorizeUrl}?${params.toString()}#wechat_redirect`;
+  }
+
+  return `${config.authorizeUrl}?${params.toString()}`;
+};
+
 // IDP 自定义 SVG 图标
 const IDPIcons: Record<string, React.FC<{ className?: string }>> = {
   user: ({ className }) => (
@@ -85,14 +165,25 @@ const IDPButton = ({
   disabled,
   onClick,
 }: IDPButtonProps) => {
-  const { connection: connName, strategy = [] } = connection;
+  const { connection: connName, strategy = [], identifier } = connection;
 
   const displayName = idpNames[connName] || connName;
   const IconComponent = IDPIcons[connName];
 
+  // 检查是否是 OAuth 类型（有 oauthConfigs 配置且有 identifier）
+  const isOAuth = !!oauthConfigs[connName] && !!identifier;
+
   // 处理点击事件
   const handleClick = (selectedStrategy?: string) => {
-    // 调用 onClick 回调，让父组件处理具体的登录逻辑
+    // 如果是 OAuth 类型，直接跳转到授权页面
+    if (isOAuth && identifier) {
+      const authURL = buildOAuthURL(connName, identifier);
+      if (authURL) {
+        window.location.href = authURL;
+        return;
+      }
+    }
+    // 其他类型调用 onClick 回调
     onClick(selectedStrategy || connName);
   };
 
