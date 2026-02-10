@@ -12,8 +12,6 @@ interface PasswordInputProps {
   disabled?: boolean;
   /** 提交回调 */
   onSubmit: (password: string) => void;
-  /** 返回回调 */
-  onBack?: () => void;
 }
 
 const PasswordInput = ({
@@ -21,7 +19,6 @@ const PasswordInput = ({
   loading = false,
   disabled = false,
   onSubmit,
-  onBack,
 }: PasswordInputProps) => {
   const [form] = Form.useForm();
   const [showPassword, setShowPassword] = useState(false);
@@ -34,15 +31,7 @@ const PasswordInput = ({
     <div className={styles.container}>
       {/* 用户信息 */}
       <div className={styles.userInfo}>
-        <div className={styles.avatar}>
-          {email.charAt(0).toUpperCase()}
-        </div>
         <span className={styles.email}>{email}</span>
-        {onBack && (
-          <button type="button" className={styles.changeButton} onClick={onBack}>
-            更换账号
-          </button>
-        )}
       </div>
 
       {/* 密码表单 */}

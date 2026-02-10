@@ -12,6 +12,8 @@ import {
   verifyMFA,
   deleteMFA,
 } from '@/services/api';
+import { convertAttestationResponse, convertToPublicKeyCreationOptions } from '@/pages/Login/components/WebAuthn';
+import { passkeyUserCache } from '@/utils/passkeyCache';
 import type {
   MFAStatusResponse,
   CredentialSummary,
@@ -126,39 +128,37 @@ const SecuritySettings = () => {
 
       const { options, challenge_id } = beginResponse as SetupWebAuthnBeginResponse;
 
-      // 2. 调用 WebAuthn API
+      // 2. 转换选项格式并调用 WebAuthn API
+      const publicKeyOptions = convertToPublicKeyCreationOptions(options);
       const credential = await navigator.credentials.create({
-        publicKey: options as PublicKeyCredentialCreationOptions,
+        publicKey: publicKeyOptions,
       });
 
       if (!credential) {
         throw new Error('WebAuthn 注册被取消');
       }
 
-      // 3. 完成注册 - 发送原始请求体
-      const response = await fetch('/api/user/mfa', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          type: 'webauthn',
-          action: 'finish',
-          challenge_id,
-        }),
+      // 3. 序列化 credential 并完成注册
+      const attestationResponse = convertAttestationResponse(credential as PublicKeyCredential);
+      const finishResponse = await setupMFA({
+        type: 'webauthn',
+        action: 'finish',
+        challenge_id,
+        credential: attestationResponse,
       });
 
-      // 需要同时发送 credential 数据
-      // 这里简化处理，实际需要序列化 credential
-
-      if (response.ok) {
-        message.success('WebAuthn 凭证添加成功');
+      if ('success' in finishResponse && finishResponse.success) {
+        message.success('安全密钥添加成功');
+        // 注册成功后更新 passkey 缓存（如果有用户信息）
+        passkeyUserCache.writeAfterRegistration();
         loadMFAStatus();
       } else {
-        const error = await response.json();
-        throw new Error(error.error_description || '注册失败');
+        throw new Error('注册失败');
       }
     } catch (error: unknown) {
-      const err = error as { message?: string; error_description?: string };
+      const err = error as { name?: string; message?: string; error_description?: string };
+      // 用户取消不提示错误
+      if (err.name === 'NotAllowedError') return;
       message.error(err.error_description || err.message || 'WebAuthn 设置失败');
     } finally {
       setWebauthnLoading(false);
@@ -176,6 +176,15 @@ const SecuritySettings = () => {
         try {
           await deleteMFA({ type: 'webauthn', credential_id: credentialId });
           message.success('安全密钥已删除');
+
+          // 如果删除后没有剩余的 passkey/webauthn 凭证，清除本地缓存
+          const remaining = webauthnCredentials?.filter(
+            (c) => c.credential_id !== credentialId
+          );
+          if (!remaining || remaining.length === 0) {
+            passkeyUserCache.clear();
+          }
+
           loadMFAStatus();
         } catch (error: unknown) {
           const err = error as { error_description?: string };

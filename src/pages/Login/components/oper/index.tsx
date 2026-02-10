@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { message } from 'antd';
 import clsx from 'clsx';
 import type {
@@ -9,14 +9,7 @@ import type {
   LoginResponse,
   AuthError,
 } from '@/types';
-import { isWebAuthnSupported, isConditionalUISupported, isPlatformAuthenticatorAvailable } from '../WebAuthn';
-import { initiateWebAuthnChallenge, verifyWebAuthnCredential, login } from '@/services/api';
-import {
-  convertToPublicKeyOptions,
-  convertAssertionResponse,
-  performWebAuthnAssertion,
-  performConditionalMediation,
-} from '../WebAuthn/utils';
+import { isWebAuthnSupported } from '../WebAuthn';
 import EmailStep from './EmailStep';
 import VerifyStep from './VerifyStep';
 import styles from './index.module.scss';
@@ -39,6 +32,8 @@ interface OperLoginProps {
   onLogin: (response: LoginResponse) => void;
   /** Challenge 回调 */
   onChallenge: (challenge: ChallengeResponse) => void;
+  /** 步骤变化回调（email: 输入邮箱阶段, verify: 验证阶段） */
+  onStepChange?: (step: 'email' | 'verify') => void;
 }
 
 const OperLogin = ({
@@ -49,6 +44,7 @@ const OperLogin = ({
   disabled = false,
   onLogin,
   onChallenge,
+  onStepChange,
 }: OperLoginProps) => {
   const [step, setStep] = useState<LoginStep>('email');
   const [email, setEmail] = useState('');
@@ -57,20 +53,9 @@ const OperLogin = ({
   const [animDirection, setAnimDirection] = useState<'forward' | 'back'>('forward');
   // 用于触发重新渲染动画的 key
   const [stepKey, setStepKey] = useState(0);
-  // 设备是否有平台认证器（指纹/面容），用于控制"使用指纹或面容登录"按钮是否展示
-  const [hasPlatformAuth, setHasPlatformAuth] = useState(false);
-
-  // Conditional UI (Passkey 自动填充) 的 AbortController
-  const conditionalAbortRef = useRef<AbortController | null>(null);
 
   // 检查浏览器是否支持 WebAuthn
   const webAuthnSupported = useMemo(() => isWebAuthnSupported(), []);
-
-  // 异步检测设备是否有平台认证器
-  useEffect(() => {
-    if (!webAuthnSupported) return;
-    isPlatformAuthenticatorAvailable().then(setHasPlatformAuth);
-  }, [webAuthnSupported]);
 
   // 获取有效的 delegate MFA（在 mfaConnections 中存在的）
   const availableDelegateMFA = useMemo(() => {
@@ -83,8 +68,8 @@ const OperLogin = ({
   // 检查各种验证方式是否可用
   const hasPassword = (connection.strategy ?? []).includes('password');
   const hasEmailOTP = availableDelegateMFA.includes('email_otp');
-  // 合并 webauthn 和 passkey 为统一的 WebAuthn 能力
-  const hasWebAuthn = (availableDelegateMFA.includes('webauthn') || availableDelegateMFA.includes('passkey')) && webAuthnSupported;
+  // MFA 级 webauthn（delegate 中的 webauthn），用于登录后二次验证
+  const hasMFAWebAuthn = availableDelegateMFA.includes('webauthn') && webAuthnSupported;
 
   // 是否需要 Captcha
   const requiresCaptcha = (connection.require ?? []).includes('captcha') && !!captchaConfig;
@@ -94,74 +79,12 @@ const OperLogin = ({
     const methods: ('password' | 'email_otp' | 'webauthn')[] = [];
     if (hasPassword) methods.push('password');
     if (hasEmailOTP) methods.push('email_otp');
-    if (hasWebAuthn) methods.push('webauthn');
+    if (hasMFAWebAuthn) methods.push('webauthn');
     return methods;
-  }, [hasPassword, hasEmailOTP, hasWebAuthn]);
-
-  // Conditional UI: 页面加载后自动在浏览器自动填充中显示 Passkey 选项
-  // 用户点击输入框时会看到 Passkey 提示，选择后直接触发指纹/面容认证
-  useEffect(() => {
-    if (!hasWebAuthn) return;
-
-    const abortController = new AbortController();
-    conditionalAbortRef.current = abortController;
-
-    const startConditionalUI = async () => {
-      const supported = await isConditionalUISupported();
-      if (!supported || abortController.signal.aborted) return;
-
-      try {
-        // 1. 获取 discoverable credential challenge（无需用户名）
-        const challenge = await initiateWebAuthnChallenge('');
-        if (abortController.signal.aborted) return;
-
-        // 2. 启动条件式认证，等待用户从自动填充中选择 Passkey
-        const publicKeyOptions = convertToPublicKeyOptions(challenge.options);
-        const credential = await performConditionalMediation(
-          publicKeyOptions,
-          abortController.signal
-        );
-        if (abortController.signal.aborted) return;
-
-        // 3. 验证凭证，获取 challenge_token
-        const assertionResponse = convertAssertionResponse(credential);
-        const verifyResponse = await verifyWebAuthnCredential(
-          challenge.challenge_id,
-          assertionResponse
-        );
-
-        if (!verifyResponse.verified || !verifyResponse.challenge_token) {
-          throw new Error('验证失败');
-        }
-
-        // 4. 使用 challenge_token 完成登录
-        const loginResponse = await login({
-          connection: 'oper',
-          proof: verifyResponse.challenge_token,
-        });
-
-        if (loginResponse.challenge) {
-          onChallenge(loginResponse.challenge);
-        } else {
-          onLogin(loginResponse);
-        }
-      } catch (error) {
-        // 被中止或用户未操作，静默忽略
-        if (abortController.signal.aborted) return;
-        console.debug('Conditional UI:', error);
-      }
-    };
-
-    startConditionalUI();
-
-    return () => {
-      abortController.abort();
-      conditionalAbortRef.current = null;
-    };
-  }, [hasWebAuthn, onLogin, onChallenge]);
+  }, [hasPassword, hasEmailOTP, hasMFAWebAuthn]);
 
   // 如果没有任何可用的登录方式，不渲染
-  if (!hasPassword && !hasEmailOTP && !hasWebAuthn) {
+  if (!hasPassword && !hasEmailOTP && !hasMFAWebAuthn) {
     return null;
   }
 
@@ -171,59 +94,16 @@ const OperLogin = ({
     setAnimDirection('forward');
     setStepKey((k) => k + 1);
     setStep('verify');
-  }, []);
+    onStepChange?.('verify');
+  }, [onStepChange]);
 
-  // Passkey 点击（在邮箱步骤）
-  const handlePasskeyClick = useCallback(async () => {
-    // 终止正在运行的 Conditional UI，避免冲突
-    // 同一时刻只能有一个 navigator.credentials.get() 调用
-    conditionalAbortRef.current?.abort();
-    conditionalAbortRef.current = null;
-
-    setIsLoading(true);
-    try {
-      // Passkey 可以在不输入邮箱的情况下使用
-      // 这里我们使用空字符串，让服务端根据 Passkey 凭证识别用户
-      const challenge = await initiateWebAuthnChallenge('');
-      const publicKeyOptions = convertToPublicKeyOptions(challenge.options);
-      const credential = await performWebAuthnAssertion(publicKeyOptions);
-      const assertionResponse = convertAssertionResponse(credential);
-      const verifyResponse = await verifyWebAuthnCredential(challenge.challenge_id, assertionResponse);
-      
-      if (!verifyResponse.verified || !verifyResponse.challenge_token) {
-        throw new Error('验证失败');
-      }
-
-      // 使用 challenge_token 调用 Login
-      // 无密码模式下 principal 为空，由服务端从凭证中识别用户
-      const loginResponse = await login({
-        connection: 'oper',
-        proof: verifyResponse.challenge_token,
-      });
-
-      if (loginResponse.challenge) {
-        onChallenge(loginResponse.challenge);
-      } else {
-        onLogin(loginResponse);
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.name !== 'NotAllowedError' && !error.message.includes('cancel')) {
-          message.error(error.message || '验证失败');
-        }
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [onLogin, onChallenge]);
-
-  // 返回邮箱步骤
+  // 返回邮箱步骤（保留已输入的邮箱）
   const handleBack = useCallback(() => {
     setAnimDirection('back');
     setStepKey((k) => k + 1);
     setStep('email');
-    setEmail('');
-  }, []);
+    onStepChange?.('email');
+  }, [onStepChange]);
 
   // 登录成功
   const handleLoginSuccess = useCallback((response: LoginResponse) => {
@@ -259,17 +139,16 @@ const OperLogin = ({
         <EmailStep
           captchaConfig={captchaConfig}
           requiresCaptcha={requiresCaptcha}
-          hasWebAuthn={hasWebAuthn && hasPlatformAuth}
           loading={globalLoading}
           disabled={disabled || globalLoading}
+          initialEmail={email}
           onSubmit={handleEmailSubmit}
-          onWebAuthnClick={handlePasskeyClick}
         />
       ) : (
         <VerifyStep
           email={email}
           availableMethods={availableMethods}
-          hasWebAuthn={hasWebAuthn}
+          hasWebAuthn={hasMFAWebAuthn}
           loading={globalLoading}
           onBack={handleBack}
           onLoginSuccess={handleLoginSuccess}

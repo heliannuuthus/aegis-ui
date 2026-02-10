@@ -12,6 +12,7 @@ import {
   verifyWebAuthnCredential,
 } from '@/services/api';
 import { showError, isFlowExpiredError, restartAuthFlow, getErrorMessage } from '@/utils/error';
+import { passkeyUserCache } from '@/utils/passkeyCache';
 import type {
   ConnectionsMap,
   ConnectionConfig,
@@ -25,7 +26,8 @@ import IDPButton from './components/IDPButton';
 import ChallengeVerify from './components/ChallengeVerify';
 import OperLogin from './components/oper';
 import Passkey from './components/Passkey';
-import { isWebAuthnSupported, isConditionalUISupported } from './components/WebAuthn';
+import SecurityMask from './components/SecurityMask';
+import { isWebAuthnSupported, isConditionalUISupported, isPlatformAuthenticatorAvailable } from './components/WebAuthn';
 import {
   convertToPublicKeyOptions,
   convertAssertionResponse,
@@ -42,6 +44,13 @@ const LoginPage = () => {
   const [loginLoading, setLoginLoading] = useState(false);
   const [activeConnection, setActiveConnection] = useState<string | null>(null);
   const [challenge, setChallenge] = useState<ChallengeResponse | null>(null);
+
+  // 安全验证遮罩状态
+  const [showSecurityMask, setShowSecurityMask] = useState(false);
+  const cachedUser = useMemo(() => passkeyUserCache.get(), []);
+
+  // Oper 登录步骤状态（用于控制社交登录等区块的显示）
+  const [operStep, setOperStep] = useState<'email' | 'verify'>('email');
 
   // Conditional UI (Passkey 自动填充) 的 AbortController
   const conditionalAbortRef = useRef<AbortController | null>(null);
@@ -90,8 +99,8 @@ const LoginPage = () => {
   }, []);
 
   const handleLoginSuccess = useCallback((response: LoginResponse) => {
-    if (response.redirect_uri) {
-      window.location.href = response.redirect_uri;
+    if (response.location) {
+      window.location.href = response.location;
     }
   }, []);
 
@@ -222,9 +231,59 @@ const LoginPage = () => {
     (c) => c.connection.startsWith('captcha-')
   );
 
-  // 页面级 Conditional UI：在浏览器自动填充中显示 Passkey 选项
+  // 安全验证遮罩三条件判断：缓存 + 平台认证器 + passkey connection
   useEffect(() => {
-    if (!shouldPageHandlePasskey || loading) return;
+    if (loading || !cachedUser || !passkeyConnection) return;
+
+    let cancelled = false;
+    isPlatformAuthenticatorAvailable().then((available) => {
+      if (!cancelled && available) {
+        setShowSecurityMask(true);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [loading, cachedUser, passkeyConnection]);
+
+  // 安全验证遮罩的 Passkey 登录处理
+  const handleSecurityMaskLogin = useCallback(async () => {
+    // 终止正在运行的 Conditional UI
+    conditionalAbortRef.current?.abort();
+    conditionalAbortRef.current = null;
+
+    const challengeResp = await initiateWebAuthnChallenge('');
+    const publicKeyOptions = convertToPublicKeyOptions(challengeResp.options);
+    const credential = await performWebAuthnAssertion(publicKeyOptions);
+    const assertionResponse = convertAssertionResponse(credential);
+    const verifyResponse = await verifyWebAuthnCredential(
+      challengeResp.challenge_id,
+      assertionResponse
+    );
+
+    if (!verifyResponse.verified || !verifyResponse.challenge_token) {
+      throw new Error('验证失败');
+    }
+
+    const loginResponse = await login({
+      connection: 'passkey',
+      proof: verifyResponse.challenge_token,
+    });
+
+    if (loginResponse.challenge) {
+      setChallenge(loginResponse.challenge);
+    } else {
+      handleLoginSuccess(loginResponse);
+    }
+  }, [handleLoginSuccess]);
+
+  // 关闭安全验证遮罩，切换到普通登录
+  const handleSecurityMaskSwitch = useCallback(() => {
+    setShowSecurityMask(false);
+  }, []);
+
+  // 页面级 Conditional UI：在浏览器自动填充中显示 Passkey 选项
+  // 当安全验证遮罩显示时，不启动 Conditional UI
+  useEffect(() => {
+    if (!shouldPageHandlePasskey || loading || showSecurityMask) return;
 
     const abortController = new AbortController();
     conditionalAbortRef.current = abortController;
@@ -277,7 +336,7 @@ const LoginPage = () => {
       abortController.abort();
       conditionalAbortRef.current = null;
     };
-  }, [shouldPageHandlePasskey, loading, handleLoginSuccess]);
+  }, [shouldPageHandlePasskey, loading, showSecurityMask, handleLoginSuccess]);
 
   // 手动点击 Passkey 按钮登录（模态弹窗模式）
   const handleManualPasskeyLogin = useCallback(async () => {
@@ -378,6 +437,15 @@ const LoginPage = () => {
           )}
         </div>
 
+        {/* 安全验证遮罩 */}
+        {showSecurityMask && cachedUser ? (
+          <SecurityMask
+            userHint={cachedUser}
+            onLogin={handleSecurityMaskLogin}
+            onSwitch={handleSecurityMaskSwitch}
+          />
+        ) : (
+        <>
         {/* 标题 */}
         <h1 className={clsx(styles.title, !authContext?.service?.description && styles.noSubtitle)}>
           登录到 {authContext?.application?.name || 'Aegis'}
@@ -417,19 +485,20 @@ const LoginPage = () => {
                 disabled={loginLoading}
                 onLogin={handleLoginSuccess}
                 onChallenge={setChallenge}
+                onStepChange={setOperStep}
               />
             </div>
           )}
 
-          {/* 分隔线 - Oper 和社交登录之间 */}
-          {(shouldShowOper || shouldPageHandlePasskey) && idpConnections.length > 0 && (
+          {/* 分隔线 - Oper 和社交登录之间（用户进入验证步骤后隐藏） */}
+          {operStep === 'email' && (shouldShowOper || shouldPageHandlePasskey) && idpConnections.length > 0 && (
             <div className={styles.divider}>
               <span>或</span>
             </div>
           )}
 
-          {/* 社交登录 */}
-          {idpConnections.length > 0 && (
+          {/* 社交登录（用户进入验证步骤后隐藏） */}
+          {operStep === 'email' && idpConnections.length > 0 && (
             <div className={styles.socialSection}>
               {idpConnections.map((conn) => (
                 <IDPButton
@@ -462,6 +531,8 @@ const LoginPage = () => {
             <a href="/privacy" target="_blank" rel="noopener noreferrer">隐私政策</a>
           </span>
         </div>
+        </>
+        )}
       </div>
     </div>
   );

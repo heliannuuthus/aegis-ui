@@ -1,4 +1,4 @@
-import type { WebAuthnRequestOptions, WebAuthnAssertionResponse } from '@/types';
+import type { WebAuthnRequestOptions, WebAuthnAssertionResponse, WebAuthnAttestationResponse } from '@/types';
 
 /**
  * Base64URL 解码为 ArrayBuffer
@@ -79,7 +79,35 @@ export const isPlatformAuthenticatorAvailable = async (): Promise<boolean> => {
 };
 
 /**
- * 将服务端的 WebAuthn 选项转换为浏览器 API 格式
+ * 将服务端的 WebAuthn 注册选项转换为浏览器 API 格式
+ *
+ * go-webauthn 返回的 CredentialCreation 中，challenge / user.id / excludeCredentials[].id
+ * 均为 base64url 编码字符串，需要转换为 ArrayBuffer。
+ */
+export const convertToPublicKeyCreationOptions = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  options: any
+): PublicKeyCredentialCreationOptions => {
+  const publicKey = options.publicKey || options;
+  return {
+    ...publicKey,
+    challenge: base64URLToBuffer(publicKey.challenge),
+    user: {
+      ...publicKey.user,
+      id: base64URLToBuffer(publicKey.user.id),
+    },
+    excludeCredentials: publicKey.excludeCredentials?.map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (cred: any) => ({
+        ...cred,
+        id: base64URLToBuffer(cred.id),
+      })
+    ),
+  };
+};
+
+/**
+ * 将服务端的 WebAuthn 认证选项转换为浏览器 API 格式
  */
 export const convertToPublicKeyOptions = (
   options: WebAuthnRequestOptions
@@ -95,6 +123,34 @@ export const convertToPublicKeyOptions = (
       transports: cred.transports,
     })),
   };
+};
+
+/**
+ * 将浏览器的注册响应转换为服务端格式
+ */
+export const convertAttestationResponse = (
+  credential: PublicKeyCredential
+): WebAuthnAttestationResponse => {
+  const response = credential.response as AuthenticatorAttestationResponse;
+  const result: WebAuthnAttestationResponse = {
+    id: credential.id,
+    rawId: bufferToBase64URL(credential.rawId),
+    type: 'public-key',
+    response: {
+      attestationObject: bufferToBase64URL(response.attestationObject),
+      clientDataJSON: bufferToBase64URL(response.clientDataJSON),
+    },
+  };
+
+  // 获取传输方式（如果浏览器支持）
+  if (typeof response.getTransports === 'function') {
+    const transports = response.getTransports();
+    if (transports.length > 0) {
+      result.response.transports = transports;
+    }
+  }
+
+  return result;
 };
 
 /**

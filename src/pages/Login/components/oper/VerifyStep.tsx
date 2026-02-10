@@ -8,7 +8,6 @@ import type {
   LoginResponse,
 } from '@/types';
 import { initiateWebAuthnChallenge, verifyWebAuthnCredential, login, initiateChallenge } from '@/services/api';
-import WebAuthn from '../WebAuthn';
 import PasswordInput from '../PasswordInput';
 import ChallengeVerify from '../ChallengeVerify';
 import styles from './index.module.scss';
@@ -17,14 +16,14 @@ import styles from './index.module.scss';
 type VerifyMethod = 'password' | 'email_otp' | 'webauthn';
 
 /** 当前视图 */
-type ViewState = 'loading' | 'webauthn' | 'options' | 'password' | 'email_otp';
+type ViewState = 'options' | 'password' | 'email_otp';
 
 interface VerifyStepProps {
   /** 用户邮箱 */
   email: string;
   /** 可用的验证方式 */
   availableMethods: VerifyMethod[];
-  /** 是否支持 WebAuthn（指纹/面容/安全密钥） */
+  /** 是否支持 WebAuthn MFA（delegate 中有 webauthn 且浏览器支持） */
   hasWebAuthn: boolean;
   /** 是否正在加载 */
   loading?: boolean;
@@ -48,50 +47,45 @@ const VerifyStep = ({
   onChallenge,
   onError,
 }: VerifyStepProps) => {
-  const [viewState, setViewState] = useState<ViewState>('loading');
-  const [webAuthnChallenge, setWebAuthnChallenge] = useState<WebAuthnChallengeResponse | null>(null);
+  const [viewState, setViewState] = useState<ViewState>('options');
   const [isLoading, setIsLoading] = useState(false);
   const [emailOTPChallenge, setEmailOTPChallenge] = useState<ChallengeResponse | null>(null);
 
   const hasPassword = availableMethods.includes('password');
   const hasEmailOTP = availableMethods.includes('email_otp');
 
-  // 初始化：如果支持 WebAuthn，自动触发
+  // 如果只有一种验证方式，直接进入对应视图
   useEffect(() => {
-    const initVerify = async () => {
-      if (hasWebAuthn) {
-        setViewState('loading');
-        try {
-          const challenge = await initiateWebAuthnChallenge(email);
-          setWebAuthnChallenge(challenge);
-          setViewState('webauthn');
-        } catch (error) {
-          console.error('WebAuthn challenge 获取失败:', error);
-          // 回退到选项列表
-          setViewState('options');
-        }
-      } else {
-        // 没有 WebAuthn，直接显示选项
-        setViewState('options');
-      }
-    };
+    const methodCount = [hasPassword, hasEmailOTP, hasWebAuthn].filter(Boolean).length;
+    if (methodCount === 1) {
+      if (hasPassword) setViewState('password');
+      // email_otp 和 webauthn 需要先发起请求，留在 options 视图中自动触发
+    }
+  }, [hasPassword, hasEmailOTP, hasWebAuthn]);
 
-    initVerify();
-  }, [email, hasWebAuthn]);
-
-  // WebAuthn 认证成功 → 获取 challenge_token → 调用 Login
-  const handleWebAuthnSuccess = useCallback(async (credential: WebAuthnAssertionResponse) => {
-    if (!webAuthnChallenge) return;
-
+  // WebAuthn MFA 认证（浏览器弹窗模式，非遮罩）
+  const handleWebAuthnLogin = useCallback(async () => {
     setIsLoading(true);
     try {
-      // 1. 验证 WebAuthn 凭证，获取 challenge_token
-      const verifyResponse = await verifyWebAuthnCredential(webAuthnChallenge.challenge_id, credential);
+      // 1. 获取 WebAuthn challenge（MFA 场景下服务端已知用户，allowCredentials 会有值）
+      const challenge = await initiateWebAuthnChallenge(email);
+
+      // 2. 动态导入 WebAuthn 工具
+      const { convertToPublicKeyOptions, convertAssertionResponse, performWebAuthnAssertion } =
+        await import('../WebAuthn/utils');
+
+      // 3. 触发浏览器系统弹窗（指纹/面容/PIN/安全密钥）
+      const publicKeyOptions = convertToPublicKeyOptions(challenge.options);
+      const credential = await performWebAuthnAssertion(publicKeyOptions);
+      const assertionResponse = convertAssertionResponse(credential);
+
+      // 4. 验证凭证，获取 challenge_token
+      const verifyResponse = await verifyWebAuthnCredential(challenge.challenge_id, assertionResponse);
       if (!verifyResponse.verified || !verifyResponse.challenge_token) {
         throw new Error('验证失败');
       }
 
-      // 2. 使用 challenge_token 作为 proof 调用 Login
+      // 5. 使用 challenge_token 作为 proof 调用 Login
       const loginResponse = await login({
         connection: 'oper',
         principal: email,
@@ -104,23 +98,19 @@ const VerifyStep = ({
         onLoginSuccess(loginResponse);
       }
     } catch (error) {
-      onError(error instanceof Error ? error : new Error('验证失败'));
-      setViewState('options');
+      if (error instanceof Error) {
+        // 用户主动取消，不报错
+        if (error.name === 'NotAllowedError' || error.message.includes('cancel')) {
+          return;
+        }
+        onError(error);
+      } else {
+        onError(new Error('安全验证失败'));
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [webAuthnChallenge, email, onLoginSuccess, onChallenge, onError]);
-
-  // WebAuthn 认证取消
-  const handleWebAuthnCancel = useCallback(() => {
-    setViewState('options');
-  }, []);
-
-  // WebAuthn 认证错误
-  const handleWebAuthnError = useCallback((error: Error) => {
-    message.error(error.message);
-    setViewState('options');
-  }, []);
+  }, [email, onLoginSuccess, onChallenge, onError]);
 
   // 密码登录
   const handlePasswordLogin = useCallback(async (password: string) => {
@@ -173,7 +163,6 @@ const VerifyStep = ({
   const handleEmailOTPContinue = useCallback(async (code: string) => {
     if (!emailOTPChallenge) return;
 
-    // 委托给父组件处理（通过 onChallenge 回调统一处理 challenge_token → login 流程）
     onChallenge({
       ...emailOTPChallenge,
       connection: 'oper',
@@ -187,83 +176,32 @@ const VerifyStep = ({
     setViewState('options');
   }, []);
 
-  // 重试 WebAuthn
-  const handleRetryWebAuthn = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const challenge = await initiateWebAuthnChallenge(email);
-      setWebAuthnChallenge(challenge);
-      setViewState('webauthn');
-    } catch (error) {
-      message.error('获取认证信息失败');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [email]);
-
   const globalLoading = loading || isLoading;
-
-  // 加载中视图
-  if (viewState === 'loading') {
-    return (
-      <div>
-        <WebAuthn
-          loading={true}
-          onSuccess={() => {}}
-          onError={() => {}}
-          onCancel={() => {}}
-        />
-      </div>
-    );
-  }
-
-  // WebAuthn 认证视图（指纹/面容/安全密钥）
-  if (viewState === 'webauthn' && webAuthnChallenge) {
-    return (
-      <div>
-        <button type="button" className={styles.backButton} onClick={() => setViewState('options')}>
-          <ArrowLeftOutlined />
-          <span>其他方式</span>
-        </button>
-
-        <WebAuthn
-          options={webAuthnChallenge.options}
-          autoTrigger={true}
-          loading={globalLoading}
-          onSuccess={handleWebAuthnSuccess}
-          onError={handleWebAuthnError}
-          onCancel={handleWebAuthnCancel}
-        />
-
-        <div className={styles.retryHint}>
-          <button
-            type="button"
-            className={styles.linkButton}
-            onClick={handleRetryWebAuthn}
-            disabled={globalLoading}
-          >
-            重试
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   // 密码输入视图
   if (viewState === 'password') {
     return (
       <div>
-        <button type="button" className={styles.backButton} onClick={() => setViewState('options')}>
-          <ArrowLeftOutlined />
-          <span>其他方式</span>
-        </button>
+        {/* 只有多种方式时才显示返回按钮 */}
+        {(hasEmailOTP || hasWebAuthn) && (
+          <button type="button" className={styles.backButton} onClick={() => setViewState('options')}>
+            <ArrowLeftOutlined />
+            <span>其他方式</span>
+          </button>
+        )}
+        {/* 只有密码一种方式时显示返回到邮箱步骤 */}
+        {!hasEmailOTP && !hasWebAuthn && (
+          <button type="button" className={styles.backButton} onClick={onBack}>
+            <ArrowLeftOutlined />
+            <span>更换账号</span>
+          </button>
+        )}
 
         <PasswordInput
           email={email}
           loading={globalLoading}
           disabled={globalLoading}
           onSubmit={handlePasswordLogin}
-          onBack={onBack}
         />
       </div>
     );
@@ -298,30 +236,12 @@ const VerifyStep = ({
 
       {/* 用户信息 */}
       <div className={styles.userInfo}>
-        <div className={styles.avatar}>
-          {email.charAt(0).toUpperCase()}
-        </div>
         <span className={styles.email}>{email}</span>
       </div>
 
       <h3 className={styles.optionsTitle}>选择登录方式</h3>
 
       <div className={styles.optionsList}>
-        {/* WebAuthn 选项（安全验证：指纹/面容/安全密钥） */}
-        {hasWebAuthn && (
-          <Button
-            size="large"
-            block
-            icon={<KeyOutlined />}
-            onClick={handleRetryWebAuthn}
-            loading={globalLoading}
-            disabled={globalLoading}
-            className={styles.optionButton}
-          >
-            使用安全验证
-          </Button>
-        )}
-
         {/* 密码登录选项 */}
         {hasPassword && (
           <Button
@@ -348,6 +268,21 @@ const VerifyStep = ({
             className={styles.optionButton}
           >
             发送邮箱验证码
+          </Button>
+        )}
+
+        {/* WebAuthn MFA 选项（安全密钥/指纹/面容二次验证） */}
+        {hasWebAuthn && (
+          <Button
+            size="large"
+            block
+            icon={<KeyOutlined />}
+            onClick={handleWebAuthnLogin}
+            loading={globalLoading}
+            disabled={globalLoading}
+            className={styles.optionButton}
+          >
+            使用安全验证
           </Button>
         )}
       </div>

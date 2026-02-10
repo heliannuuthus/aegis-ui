@@ -102,6 +102,27 @@ export interface WebAuthnChallengeResponse {
 }
 
 /**
+ * WebAuthn 注册响应（发送给服务端完成注册）
+ */
+export interface WebAuthnAttestationResponse {
+  /** 凭证 ID（base64url 编码） */
+  id: string;
+  /** 原始凭证 ID（base64url 编码） */
+  rawId: string;
+  /** 凭证类型 */
+  type: 'public-key';
+  /** 注册响应数据 */
+  response: {
+    /** 认证器数据（base64url 编码） */
+    attestationObject: string;
+    /** 客户端数据 JSON（base64url 编码） */
+    clientDataJSON: string;
+    /** 传输方式 */
+    transports?: string[];
+  };
+}
+
+/**
  * WebAuthn 认证响应（发送给服务端验证）
  */
 export interface WebAuthnAssertionResponse {
@@ -227,10 +248,8 @@ export interface LoginRequest {
  * 登录响应
  */
 export interface LoginResponse {
-  /** 授权码 */
-  code?: string;
-  /** 重定向 URI */
-  redirect_uri?: string;
+  /** 重定向地址（携带 code 和 state） */
+  location: string;
   /** Challenge 响应（需要 MFA 验证时返回） */
   challenge?: ChallengeResponse;
 }
@@ -352,6 +371,8 @@ export interface SetupMFARequest {
   app_name?: string;
   /** Challenge ID（WebAuthn finish 阶段） */
   challenge_id?: string;
+  /** WebAuthn attestation 数据（finish 阶段） */
+  [key: string]: unknown;
 }
 
 /**
