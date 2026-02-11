@@ -2,11 +2,11 @@ import { Dropdown, Spin } from 'antd';
 import type { MenuProps } from 'antd';
 import { LoadingOutlined, DownOutlined } from '@ant-design/icons';
 import clsx from 'clsx';
-import type { ConnectionConfig } from '@/types';
+import type { Connection } from '@/types';
 import styles from './index.module.scss';
 
 interface IDPButtonProps {
-  connection: ConnectionConfig;
+  connection: Connection;
   loading?: boolean;
   disabled?: boolean;
   onClick: (strategy: string) => void;

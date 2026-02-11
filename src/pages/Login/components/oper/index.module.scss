@@ -217,6 +217,13 @@ $primary-hover: #0052cc;
   }
 }
 
+// Captcha 容器 - 密码视图中的人机验证
+.captchaWrapper {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+}
+
 // 链接按钮
 .linkButton {
   background: none;

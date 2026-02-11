@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
-import type { VChanConfig } from '@/types';
+import type { Connection } from '@/types';
 import styles from './index.module.scss';
 
 // Turnstile 全局类型声明
@@ -32,7 +32,7 @@ export interface CaptchaHandle {
 
 interface CaptchaProps {
   /** Captcha 配置 */
-  config: VChanConfig;
+  config: Connection;
   /** Token 变化回调 */
   onTokenChange: (token: string | undefined) => void;
   /** 自定义类名 */
@@ -79,8 +79,8 @@ const Captcha = forwardRef<CaptchaHandle, CaptchaProps>(
     const widgetIdRef = useRef<string | undefined>(undefined);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // 从 connection 解析 captcha 类型（格式：captcha-provider，如 captcha-turnstile）
-    const captchaType = config.connection.split('-').slice(1).join('-') || '';
+    // 从 strategy 获取 captcha 类型（后端 connection="captcha", strategy=["turnstile"]）
+    const captchaType = (config.strategy ?? [])[0] || '';
     const isTurnstile = captchaType === 'turnstile';
 
     // 稳定引用 onTokenChange，避免不必要的重新渲染

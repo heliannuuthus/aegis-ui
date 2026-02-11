@@ -1,61 +1,45 @@
 // ==================== Connection 配置 ====================
 
+/** 连接类型 */
+export type ConnectionType = 'idp' | 'vchan' | 'factor';
+
 /**
- * 通用 Connection 配置
- * 适用于所有类型：IDP、VChan、MFA
+ * Connection 前端公开的连接信息
  *
  * 字段说明：
- * - connection: 标识（github, google, wechat-mp, user, oper, email_otp, captcha-turnstile...）
+ * - type: 连接类型（idp / vchan / factor）
+ * - connection: 标识（github, google, wechat-mp, user, oper, email_otp, captcha...）
  * - identifier: 公开标识（client_id / site_key / rp_id）
- * - strategy: 登录策略（仅 user/oper 需要：password）
- * - delegate: 委托验证方式（可替代 strategy 的 MFA：email_otp, webauthn）
- * - require: 前置验证（captcha）
+ * - strategy: 登录策略（仅 user/oper 需要：password, webauthn）
+ * - delegate: 可替代主认证的独立验证方式（email_otp, totp, webauthn），通过 Challenge 完成后以 ChallengeToken 作为 proof 登录
+ * - require: 前置条件（captcha），登录前必须全部通过
  */
-export interface ConnectionConfig {
+export interface Connection {
+  /** 连接类型 */
+  type: ConnectionType;
   /** Connection 标识 */
   connection: string;
   /** 公开标识（client_id / site_key / rp_id） */
   identifier?: string;
-  /** 登录策略（仅 user/oper：password） */
+  /** 登录策略（user/oper: password, webauthn; captcha: turnstile） */
   strategy?: string[];
-  /** 委托验证/可替代策略的 MFA（email_otp, webauthn） */
+  /** 可替代主认证的独立验证方式（email_otp, totp, webauthn） */
   delegate?: string[];
-  /** 前置验证要求（captcha） */
+  /** 前置条件（captcha） */
   require?: string[];
 }
 
 /**
- * VChan 配置（验证渠道，如 captcha）
- * 与 ConnectionConfig 结构相同，但语义上是验证渠道
- */
-export type VChanConfig = ConnectionConfig;
-
-/**
- * MFA 配置
- * 与 ConnectionConfig 结构相同，但语义上是 MFA
- */
-export type MFAConfig = ConnectionConfig;
-
-/**
- * Connections Map（按类别分类）
+ * Connections Map（按 ConnectionType 分类）
  *
- * - IDP: 身份提供商（github, google, user, oper, wechat-mp...）
- * - VChan: 验证渠道/前置验证（captcha-turnstile...）
- * - MFA: 多因素认证方式（email_otp, webauthn...），delegate 引用的配置
+ * JSON 示例: { "idp": [...], "vchan": [...], "factor": [...] }
  */
-export interface ConnectionsMap {
-  /** 身份提供商 */
-  idp?: ConnectionConfig[];
-  /** 验证渠道（前置验证，如 captcha） */
-  vchan?: VChanConfig[];
-  /** MFA 验证方式（delegate 引用的配置） */
-  mfa?: MFAConfig[];
-}
+export type ConnectionsMap = Partial<Record<ConnectionType, Connection[]>>;
 
 // ==================== Challenge 流程 ====================
 
-/** Challenge 类型 */
-export type ChallengeType = 'captcha' | 'totp' | 'email' | 'webauthn';
+/** Channel Type（验证方式） */
+export type ChannelType = 'email_otp' | 'totp' | 'webauthn' | 'sms_otp' | 'tg_otp' | 'wechat-mp' | 'alipay-mp';
 
 // ==================== WebAuthn 相关 ====================
 
@@ -85,20 +69,6 @@ export interface WebAuthnRequestOptions {
   userVerification?: 'required' | 'preferred' | 'discouraged';
   /** 允许的凭证列表 */
   allowCredentials?: WebAuthnCredentialDescriptor[];
-}
-
-/**
- * WebAuthn Challenge 响应
- */
-export interface WebAuthnChallengeResponse {
-  /** Challenge ID */
-  challenge_id: string;
-  /** Challenge 类型 */
-  type: 'webauthn';
-  /** 过期时间（秒） */
-  expires_in?: number;
-  /** WebAuthn 请求选项 */
-  options: WebAuthnRequestOptions;
 }
 
 /**
@@ -146,19 +116,39 @@ export interface WebAuthnAssertionResponse {
 }
 
 /**
- * 创建 Challenge 请求
+ * Captcha 配置（Challenge 前置条件）
+ */
+export interface CaptchaConfig {
+  /** 可用的 captcha provider（如 ["turnstile"]） */
+  strategy: string[];
+  /** 站点公钥（site_key） */
+  identifier: string;
+}
+
+/**
+ * Challenge 前置条件
+ */
+export interface ChallengeRequired {
+  /** 人机验证配置（有值时展示 captcha 组件） */
+  captcha?: CaptchaConfig;
+  /** captcha 是否已验证 */
+  verified: boolean;
+}
+
+/**
+ * 创建 Challenge 请求（三层模型：type / channel_type / channel）
  */
 export interface CreateChallengeRequest {
-  /** Challenge 类型 */
-  type: ChallengeType;
-  /** 关联的 AuthFlow ID */
-  flow_id?: string;
-  /** 关联的用户 ID */
-  user_id?: string;
-  /** email 类型时必填 */
-  email?: string;
-  /** captcha 前置验证 token */
-  captcha_token?: string;
+  /** 应用 ID */
+  client_id: string;
+  /** 目标服务 ID */
+  audience: string;
+  /** 业务场景（验证类必填，交换类忽略）：login / forget_password / bind_phone / bind_email */
+  type?: string;
+  /** 验证方式 */
+  channel_type: ChannelType;
+  /** 验证目标（邮箱 / 手机号 / user_id / wx_code ...） */
+  channel: string;
 }
 
 /**
@@ -167,22 +157,20 @@ export interface CreateChallengeRequest {
 export interface CreateChallengeResponse {
   /** Challenge ID */
   challenge_id: string;
-  /** Challenge 类型 */
-  type: string;
-  /** 过期时间（秒） */
-  expires_in: number;
-  /** 额外数据（如 captcha 的 site_key，email 的 masked_email） */
-  data?: Record<string, unknown>;
+  /** 前置条件（captcha 未验证时有值） */
+  required?: ChallengeRequired;
+  /** 限流，下次可发起的秒数 */
+  retry_after?: number;
 }
 
 /**
  * 验证 Challenge 请求
  */
 export interface VerifyChallengeRequest {
-  /** 验证码（totp/email） */
-  code?: string;
-  /** Captcha token */
-  token?: string;
+  /** captcha provider 类型（如 "turnstile"），仅 captcha 验证时传 */
+  type?: string;
+  /** 验证证明（OTP code / captcha token / WebAuthn assertion） */
+  proof: unknown;
 }
 
 /**
@@ -191,27 +179,16 @@ export interface VerifyChallengeRequest {
 export interface VerifyChallengeResponse {
   /** 是否验证成功 */
   verified: boolean;
-  /** 后续 Challenge ID（captcha 验证后创建的 email challenge） */
-  challenge_id?: string;
   /** 验证成功后的凭证（用于 Login 的 proof） */
   challenge_token?: string;
-  /** 附加数据 */
-  data?: Record<string, unknown>;
+  /** 前置未完成时引导渲染 */
+  required?: ChallengeRequired;
+  /** 限流 */
+  retry_after?: number;
 }
 
 /**
- * 需要前置验证的响应
- */
-export interface RequireResponse {
-  error: 'require_config';
-  require: {
-    type: string;
-    config?: Record<string, unknown>;
-  };
-}
-
-/**
- * Challenge 响应（登录返回的）
+ * Challenge 响应（登录返回的，用于 ChallengeVerify 组件渲染）
  */
 export interface ChallengeResponse {
   /** Challenge ID */

@@ -10,6 +10,8 @@ interface PasswordInputProps {
   loading?: boolean;
   /** 是否禁用 */
   disabled?: boolean;
+  /** 插槽：渲染在密码输入框和登录按钮之间（如 captcha） */
+  beforeSubmit?: React.ReactNode;
   /** 提交回调 */
   onSubmit: (password: string) => void;
 }
@@ -18,6 +20,7 @@ const PasswordInput = ({
   email,
   loading = false,
   disabled = false,
+  beforeSubmit,
   onSubmit,
 }: PasswordInputProps) => {
   const [form] = Form.useForm();
@@ -59,6 +62,9 @@ const PasswordInput = ({
             }}
           />
         </Form.Item>
+
+        {/* 插槽：密码输入框和登录按钮之间（captcha 等） */}
+        {beforeSubmit}
 
         <Form.Item>
           <Button

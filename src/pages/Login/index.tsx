@@ -8,15 +8,13 @@ import {
   getAuthContext,
   login,
   continueChallenge,
-  initiateWebAuthnChallenge,
-  verifyWebAuthnCredential,
+  initiateChallenge,
 } from '@/services/api';
 import { showError, isFlowExpiredError, restartAuthFlow, getErrorMessage } from '@/utils/error';
 import { passkeyUserCache } from '@/utils/passkeyCache';
 import type {
   ConnectionsMap,
-  ConnectionConfig,
-  VChanConfig,
+  Connection,
   LoginResponse,
   ChallengeResponse,
   AuthError,
@@ -147,8 +145,13 @@ const LoginPage = () => {
     setLoginLoading(true);
     try {
       // 1. 验证 Challenge，获取 challenge_token
-      const verifyResponse = await continueChallenge(challenge.challenge_id, { code });
+      const verifyResponse = await continueChallenge(challenge.challenge_id, { proof: code });
       if (!verifyResponse.verified) {
+        // 检查是否有前置条件未完成
+        if (verifyResponse.required) {
+          message.warning('请先完成前置验证');
+          return;
+        }
         message.error('验证失败，请重试');
         return;
       }
@@ -201,15 +204,15 @@ const LoginPage = () => {
   const shouldShowOper =
     operConnection &&
     ((operConnection.strategy ?? []).length > 0 ||
-      (operConnection.delegate ?? []).some((mfa) =>
-        (connections.mfa ?? []).some((m) => m.connection === mfa)
+      (operConnection.delegate ?? []).some((d) =>
+        (connections.factor ?? []).some((m) => m.connection === d)
       ));
 
-  // oper 是否已经处理 Passkey（有 passkey delegate 且 mfa 中有 passkey）
+  // oper 是否已经处理 Passkey（有 passkey delegate 且 factor 中有 passkey）
   const operHandlesPasskey =
     shouldShowOper &&
     (operConnection?.delegate ?? []).includes('passkey') &&
-    (connections.mfa ?? []).some((m) => m.connection === 'passkey');
+    (connections.factor ?? []).some((m) => m.connection === 'passkey');
 
   // 页面级是否需要处理独立 Passkey IDP（oper 不处理时才由页面处理）
   const shouldPageHandlePasskey =
@@ -217,7 +220,7 @@ const LoginPage = () => {
 
   // IDP 连接（社交登录按钮）
   // 排除 oper（由 OperLogin 组件处理）、passkey（单独处理）、email 和无 delegate 的 user（由 oper 统一处理）
-  const idpConnections: ConnectionConfig[] = (connections.idp ?? []).filter(
+  const idpConnections: Connection[] = (connections.idp ?? []).filter(
     (c) =>
       c.connection !== 'oper' &&
       c.connection !== 'passkey' &&
@@ -226,9 +229,9 @@ const LoginPage = () => {
       !(c.strategy ?? []).includes('mp')
   );
 
-  // Captcha 配置（connection 格式为 captcha-provider，如 captcha-turnstile）
-  const captchaConfig: VChanConfig | undefined = (connections.vchan ?? []).find(
-    (c) => c.connection.startsWith('captcha-')
+  // Captcha 配置（connection 值为 "captcha"）
+  const captchaConfig: Connection | undefined = (connections.vchan ?? []).find(
+    (c) => c.connection === 'captcha'
   );
 
   // 安全验证遮罩三条件判断：缓存 + 平台认证器 + passkey connection
@@ -244,36 +247,64 @@ const LoginPage = () => {
     return () => { cancelled = true; };
   }, [loading, cachedUser, passkeyConnection]);
 
+  // 辅助函数：执行 Passkey WebAuthn 登录流程
+  const performPasskeyLogin = useCallback(async (
+    options?: { signal?: AbortSignal; conditional?: boolean }
+  ) => {
+    if (!authContext?.application?.app_id || !authContext?.service?.service_id) {
+      throw new Error('认证上下文不完整');
+    }
+
+    // 1. 创建 WebAuthn challenge（后端返回 challenge_id + options）
+    const challengeResp = await initiateChallenge({
+      client_id: authContext.application.app_id,
+      audience: authContext.service.service_id,
+      type: 'login',
+      channel_type: 'webauthn',
+      channel: '',
+    });
+
+    // 2. 转换 options 并执行 WebAuthn assertion
+    // 注意：后端需要在 CreateChallengeResponse 中返回 WebAuthn options
+    // 当前通过 challenge_id 获取 options 可能需要后端额外接口支持
+    const publicKeyOptions = convertToPublicKeyOptions((challengeResp as any).options);
+    const credential = options?.conditional
+      ? await performConditionalMediation(publicKeyOptions, options.signal!)
+      : await performWebAuthnAssertion(publicKeyOptions);
+    const assertionResponse = convertAssertionResponse(credential);
+
+    // 3. 验证凭证
+    const verifyResponse = await continueChallenge(challengeResp.challenge_id, {
+      proof: JSON.stringify(assertionResponse),
+    });
+
+    if (!verifyResponse.verified || !verifyResponse.challenge_token) {
+      throw new Error('验证失败');
+    }
+
+    // 4. 使用 challenge_token 完成登录
+    const loginResponse = await login({
+      connection: 'passkey',
+      proof: verifyResponse.challenge_token,
+    });
+
+    return loginResponse;
+  }, [authContext]);
+
   // 安全验证遮罩的 Passkey 登录处理
   const handleSecurityMaskLogin = useCallback(async () => {
     // 终止正在运行的 Conditional UI
     conditionalAbortRef.current?.abort();
     conditionalAbortRef.current = null;
 
-    const challengeResp = await initiateWebAuthnChallenge('');
-    const publicKeyOptions = convertToPublicKeyOptions(challengeResp.options);
-    const credential = await performWebAuthnAssertion(publicKeyOptions);
-    const assertionResponse = convertAssertionResponse(credential);
-    const verifyResponse = await verifyWebAuthnCredential(
-      challengeResp.challenge_id,
-      assertionResponse
-    );
-
-    if (!verifyResponse.verified || !verifyResponse.challenge_token) {
-      throw new Error('验证失败');
-    }
-
-    const loginResponse = await login({
-      connection: 'passkey',
-      proof: verifyResponse.challenge_token,
-    });
+    const loginResponse = await performPasskeyLogin();
 
     if (loginResponse.challenge) {
       setChallenge(loginResponse.challenge);
     } else {
       handleLoginSuccess(loginResponse);
     }
-  }, [handleLoginSuccess]);
+  }, [performPasskeyLogin, handleLoginSuccess]);
 
   // 关闭安全验证遮罩，切换到普通登录
   const handleSecurityMaskSwitch = useCallback(() => {
@@ -293,31 +324,11 @@ const LoginPage = () => {
       if (!supported || abortController.signal.aborted) return;
 
       try {
-        const challengeResp = await initiateWebAuthnChallenge('');
-        if (abortController.signal.aborted) return;
-
-        const publicKeyOptions = convertToPublicKeyOptions(challengeResp.options);
-        const credential = await performConditionalMediation(
-          publicKeyOptions,
-          abortController.signal
-        );
-        if (abortController.signal.aborted) return;
-
-        const assertionResponse = convertAssertionResponse(credential);
-        const verifyResponse = await verifyWebAuthnCredential(
-          challengeResp.challenge_id,
-          assertionResponse
-        );
-
-        if (!verifyResponse.verified || !verifyResponse.challenge_token) {
-          throw new Error('验证失败');
-        }
-
-        // 使用 passkey 连接完成登录
-        const loginResponse = await login({
-          connection: 'passkey',
-          proof: verifyResponse.challenge_token,
+        const loginResponse = await performPasskeyLogin({
+          signal: abortController.signal,
+          conditional: true,
         });
+        if (abortController.signal.aborted) return;
 
         if (loginResponse.challenge) {
           setChallenge(loginResponse.challenge);
@@ -336,7 +347,7 @@ const LoginPage = () => {
       abortController.abort();
       conditionalAbortRef.current = null;
     };
-  }, [shouldPageHandlePasskey, loading, showSecurityMask, handleLoginSuccess]);
+  }, [shouldPageHandlePasskey, loading, showSecurityMask, performPasskeyLogin, handleLoginSuccess]);
 
   // 手动点击 Passkey 按钮登录（模态弹窗模式）
   const handleManualPasskeyLogin = useCallback(async () => {
@@ -347,23 +358,7 @@ const LoginPage = () => {
     setLoginLoading(true);
     setActiveConnection('passkey');
     try {
-      const challengeResp = await initiateWebAuthnChallenge('');
-      const publicKeyOptions = convertToPublicKeyOptions(challengeResp.options);
-      const credential = await performWebAuthnAssertion(publicKeyOptions);
-      const assertionResponse = convertAssertionResponse(credential);
-      const verifyResponse = await verifyWebAuthnCredential(
-        challengeResp.challenge_id,
-        assertionResponse
-      );
-
-      if (!verifyResponse.verified || !verifyResponse.challenge_token) {
-        throw new Error('验证失败');
-      }
-
-      const loginResponse = await login({
-        connection: 'passkey',
-        proof: verifyResponse.challenge_token,
-      });
+      const loginResponse = await performPasskeyLogin();
 
       if (loginResponse.challenge) {
         setChallenge(loginResponse.challenge);
@@ -380,7 +375,7 @@ const LoginPage = () => {
       setLoginLoading(false);
       setActiveConnection(null);
     }
-  }, [handleLoginSuccess]);
+  }, [performPasskeyLogin, handleLoginSuccess]);
 
   const hasConnections =
     idpConnections.length > 0 ||
@@ -479,8 +474,9 @@ const LoginPage = () => {
             <div className={styles.formSection}>
               <OperLogin
                 connection={operConnection}
-                mfaConnections={connections.mfa ?? []}
+                delegatedConnections={connections.factor ?? []}
                 captchaConfig={captchaConfig}
+                authContext={authContext}
                 loading={loginLoading && activeConnection === 'oper'}
                 disabled={loginLoading}
                 onLogin={handleLoginSuccess}

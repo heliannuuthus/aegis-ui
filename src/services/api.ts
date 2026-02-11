@@ -9,8 +9,6 @@ import type {
   VerifyChallengeResponse,
   AuthError,
   AuthContext,
-  WebAuthnChallengeResponse,
-  WebAuthnAssertionResponse,
   UserProfile,
   UpdateProfileRequest,
   MFAStatusResponse,
@@ -55,7 +53,7 @@ export const getAuthContext = async (): Promise<AuthContext> => {
 
 /**
  * 获取可用的 Connections Map
- * 返回按类别分类的 connections：idp、vchan、mfa
+ * 返回按关系角色分类的 connections：idp、required、delegated
  */
 export const getConnections = async (): Promise<ConnectionsMap> => {
   const response = await api.get<ConnectionsMap>('/connections');
@@ -71,7 +69,7 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
 };
 
 /**
- * 发起 Challenge
+ * 发起 Challenge（三层模型：type / channel_type / channel）
  */
 export const initiateChallenge = async (
   data: CreateChallengeRequest
@@ -82,49 +80,16 @@ export const initiateChallenge = async (
 
 /**
  * 继续 Challenge（提交验证）
- * @param challengeId Challenge ID（作为 query 参数）
- * @param data 验证数据（code 或 token）
+ * @param challengeId Challenge ID（路径参数）
+ * @param data 验证数据（{ type?, proof }）
  */
 export const continueChallenge = async (
   challengeId: string,
   data: VerifyChallengeRequest
 ): Promise<VerifyChallengeResponse> => {
-  const response = await api.put<VerifyChallengeResponse>(
-    `/challenge?challenge_id=${encodeURIComponent(challengeId)}`,
+  const response = await api.post<VerifyChallengeResponse>(
+    `/challenge/${encodeURIComponent(challengeId)}`,
     data
-  );
-  return response.data;
-};
-
-// ==================== WebAuthn 相关 ====================
-
-/**
- * 发起 WebAuthn 认证 Challenge
- * @param principal 用户标识（邮箱）
- */
-export const initiateWebAuthnChallenge = async (
-  principal: string
-): Promise<WebAuthnChallengeResponse> => {
-  const response = await api.post<WebAuthnChallengeResponse>('/challenge', {
-    type: 'webauthn',
-    principal,
-  });
-  return response.data;
-};
-
-/**
- * 验证 WebAuthn 凭证
- * @param challengeId Challenge ID
- * @param credential WebAuthn 认证响应
- * @returns VerifyChallengeResponse 包含 challenge_token，用于后续 Login
- */
-export const verifyWebAuthnCredential = async (
-  challengeId: string,
-  credential: WebAuthnAssertionResponse
-): Promise<VerifyChallengeResponse> => {
-  const response = await api.put<VerifyChallengeResponse>(
-    `/challenge?challenge_id=${encodeURIComponent(challengeId)}`,
-    { credential }
   );
   return response.data;
 };
