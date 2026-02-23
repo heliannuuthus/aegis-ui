@@ -1,3 +1,9 @@
+/**
+ * iris 域名下的关联账号页面（/user/linked 子路由）
+ *
+ * 使用 irisApi（Bearer Token）替代原有的 Cookie API
+ */
+
 import { useState, useEffect } from 'react';
 import { Card, Button, message, Modal, Empty, Spin } from 'antd';
 import {
@@ -8,12 +14,12 @@ import {
   DeleteOutlined,
   LinkOutlined,
 } from '@ant-design/icons';
-import { getIdentities, unbindIdentity } from '@/services/api';
+import { useAuth } from '@/providers/AuthProvider';
+import { getIdentities, unbindIdentity } from '@/services/irisApi';
 import { showError } from '@/utils/error';
 import type { Identity } from '@/types';
 import styles from './LinkedAccounts.module.scss';
 
-// IDP 图标和名称映射
 const idpConfig: Record<string, { icon: React.ReactNode; name: string; color: string }> = {
   github: { icon: <GithubOutlined />, name: 'GitHub', color: '#24292e' },
   google: { icon: <GoogleOutlined />, name: 'Google', color: '#4285f4' },
@@ -21,18 +27,20 @@ const idpConfig: Record<string, { icon: React.ReactNode; name: string; color: st
   'alipay-mp': { icon: <AlipayCircleOutlined />, name: '支付宝', color: '#1677ff' },
 };
 
-const LinkedAccounts = () => {
+const IrisLinkedAccounts = () => {
+  const { auth } = useAuth();
   const [loading, setLoading] = useState(true);
   const [identities, setIdentities] = useState<Identity[]>([]);
 
   useEffect(() => {
     loadIdentities();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadIdentities = async () => {
     try {
       setLoading(true);
-      const data = await getIdentities();
+      const data = await getIdentities(auth);
       setIdentities(data.identities || []);
     } catch (error: unknown) {
       showError(error);
@@ -43,7 +51,6 @@ const LinkedAccounts = () => {
 
   const handleUnbind = async (idp: string) => {
     const config = idpConfig[idp] || { name: idp };
-
     Modal.confirm({
       title: '确认解绑',
       content: `解绑 ${config.name} 后，您将无法使用该账号登录。确定要解绑吗？`,
@@ -52,7 +59,7 @@ const LinkedAccounts = () => {
       cancelText: '取消',
       onOk: async () => {
         try {
-          await unbindIdentity(idp);
+          await unbindIdentity(auth, idp);
           message.success(`${config.name} 已解绑`);
           loadIdentities();
         } catch (error: unknown) {
@@ -63,7 +70,6 @@ const LinkedAccounts = () => {
   };
 
   const handleBind = (idp: string) => {
-    // TODO: 跳转到绑定流程
     message.info(`绑定 ${idpConfig[idp]?.name || idp} 功能开发中`);
   };
 
@@ -75,15 +81,11 @@ const LinkedAccounts = () => {
     );
   }
 
-  // 已绑定的 IDP
   const boundIdps = identities.map((i) => i.idp);
-
-  // 可绑定的 IDP（未绑定的）
   const availableIdps = Object.keys(idpConfig).filter((idp) => !boundIdps.includes(idp));
 
   return (
     <div className={styles.container}>
-      {/* 已绑定的账号 */}
       <Card title="已关联账号" className={styles.card}>
         {identities.length > 0 ? (
           <div className={styles.identityList}>
@@ -93,14 +95,10 @@ const LinkedAccounts = () => {
                 name: identity.idp,
                 color: '#666',
               };
-
               return (
                 <div key={identity.idp} className={styles.identityItem}>
                   <div className={styles.identityInfo}>
-                    <span
-                      className={styles.identityIcon}
-                      style={{ color: config.color }}
-                    >
+                    <span className={styles.identityIcon} style={{ color: config.color }}>
                       {config.icon}
                     </span>
                     <div>
@@ -127,13 +125,11 @@ const LinkedAccounts = () => {
         )}
       </Card>
 
-      {/* 可绑定的账号 */}
       {availableIdps.length > 0 && (
         <Card title="可关联账号" className={styles.card}>
           <div className={styles.availableList}>
             {availableIdps.map((idp) => {
               const config = idpConfig[idp];
-
               return (
                 <Button
                   key={idp}
@@ -152,4 +148,4 @@ const LinkedAccounts = () => {
   );
 };
 
-export default LinkedAccounts;
+export default IrisLinkedAccounts;

@@ -1,4 +1,4 @@
-# Oper 登录流程说明
+# Staff 登录流程说明
 
 ## 核心概念
 
@@ -24,7 +24,7 @@
 {
   "idp": [
     {
-      "connection": "oper",
+      "connection": "staff",
       "strategy": ["password"],
       "delegate": ["email_otp", "webauthn"],
       "require": ["captcha"]
@@ -48,7 +48,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        Oper 登录完整流程                              │
+│                        Staff 登录完整流程                             │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
 │  Step 1: 邮箱输入 + Captcha（如果 require 包含 captcha）              │
@@ -108,7 +108,7 @@
 
 ```typescript
 interface LoginRequest {
-  connection: string;    // 必填：oper
+  connection: string;    // 必填：staff
   strategy?: string;     // 可选：password（使用 strategy 时）
   principal: string;     // 必填：用户邮箱
   proof: string;         // 必填：密码 或 challenge_token
@@ -119,7 +119,7 @@ interface LoginRequest {
 
 ```json
 {
-  "connection": "oper",
+  "connection": "staff",
   "strategy": "password",
   "principal": "user@example.com",
   "proof": "my_password_123"
@@ -130,7 +130,7 @@ interface LoginRequest {
 
 ```json
 {
-  "connection": "oper",
+  "connection": "staff",
   "principal": "user@example.com",
   "proof": "challenge_token_xxx"
 }
@@ -139,18 +139,18 @@ interface LoginRequest {
 ## 前端渲染逻辑
 
 ```typescript
-// 1. 获取 oper 配置
-const operConfig = connections.idp.find(c => c.connection === 'oper');
+// 1. 获取 staff 配置
+const staffConfig = connections.idp.find(c => c.connection === 'staff');
 
 // 2. 检查前置验证（captcha）
-if ((operConfig.require ?? []).includes('captcha')) {
+if ((staffConfig.require ?? []).includes('captcha')) {
   const captchaConfig = connections.required.find(c => c.connection === 'captcha');
   // 使用 captchaConfig.identifier (site_key) 初始化 Turnstile，strategy[0] 确定 provider 类型
 }
 
 // 3. 获取可用的验证方式
-const hasPassword = (operConfig.strategy ?? []).includes('password');
-const delegates = operConfig.delegate ?? [];
+const hasPassword = (staffConfig.strategy ?? []).includes('password');
+const delegates = staffConfig.delegate ?? [];
 
 // 4. 过滤有效的 delegate（在 delegated 配置中存在的）
 const availableDelegates = delegates.filter(d => 

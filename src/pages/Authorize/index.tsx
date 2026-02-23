@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, Spin } from 'antd';
-import api from '@/services/api';
+import api, { isRedirectAction } from '@/services/api';
 import { isFlowExpiredError, restartAuthFlow, getErrorMessage } from '@/utils/error';
+import { smartNavigate } from '@/utils/navigation';
+
 import type { AuthError } from '@/types';
 import styles from './index.module.scss';
 
@@ -25,8 +27,12 @@ const AuthorizePage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const initiatedRef = useRef(false);
 
   useEffect(() => {
+    if (initiatedRef.current) return;
+    initiatedRef.current = true;
+
     const initiateAuthorize = async () => {
       // 保存完整的 authorize URL，用于 flow 过期后重新发起
       sessionStorage.setItem('authorize_url', window.location.href);
@@ -83,13 +89,11 @@ const AuthorizePage = () => {
           },
         });
 
-        // 根据响应处理
-        // 1. 如果返回重定向 URL（如 IDP 登录），直接跳转
-        // 2. 如果需要登录，跳转到登录页
-        if (response.data?.redirect_uri) {
-          window.location.href = response.data.redirect_uri;
+        // 300 协议：后端统一通过 Location header 指示下一步
+        if (isRedirectAction(response.data)) {
+          // Authorize 阶段的 300：内部路径用 SPA 路由，外部路径用整页跳转
+          smartNavigate(response.data.location, navigate);
         } else {
-          // 默认跳转到登录页，保留当前的 query 参数
           navigate(`/login?${searchParams.toString()}`);
         }
       } catch (err: unknown) {
@@ -99,7 +103,10 @@ const AuthorizePage = () => {
         if (isFlowExpiredError(authError)) {
           restartAuthFlow();
         } else {
-          setError(authError.error_description || getErrorMessage(authError));
+          // authorize 接口返回 OAuth 2.0 标准错误体 {"error": "...", "error_description": "..."}
+          const desc = authError.data?.error_description as string | undefined;
+          const code = authError.data?.error as string | undefined;
+          setError(desc || code || getErrorMessage(authError));
         }
       } finally {
         setLoading(false);

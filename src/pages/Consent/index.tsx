@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Button, Spin, Avatar } from 'antd';
+import { Button, Image, Spin, Avatar } from 'antd';
 import { LoadingOutlined, UserOutlined } from '@ant-design/icons';
-
+import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import api from '@/services/api';
 import { showError, isFlowExpiredError, restartAuthFlow } from '@/utils/error';
+import { smartNavigate } from '@/utils/navigation';
 import type { AuthError } from '@/types';
 import styles from './index.module.scss';
 
@@ -69,7 +70,7 @@ const scopeConfig: Record<string, { icon: React.ReactNode; description: string }
 };
 
 function ConsentPage() {
-
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [consentInfo, setConsentInfo] = useState<ConsentInfo | null>(null);
@@ -109,7 +110,8 @@ function ConsentPage() {
       const response = await api.post<{ redirect_uri: string }>('/consent', {
         scopes: selectedScopes,
       });
-      window.location.href = response.data.redirect_uri;
+      // 授权成功后跳转：内部路径用 SPA 路由，外部路径（回调到 atlas）用整页跳转
+      smartNavigate(response.data.redirect_uri, navigate);
     } catch (error: unknown) {
       showError(error);
     } finally {
@@ -122,7 +124,8 @@ function ConsentPage() {
     setSubmitting(true);
     try {
       await api.post('/consent/deny');
-      window.history.back();
+      // 拒绝授权后返回登录页
+      navigate('/login', { replace: true });
     } catch (error) {
       showError(error);
     } finally {
@@ -167,7 +170,7 @@ function ConsentPage() {
         <div className={styles.connectionIndicator}>
           <div className={styles.appIcon}>
             {consentInfo.client_logo ? (
-              <img src={consentInfo.client_logo} alt={consentInfo.client_name} />
+              <Image src={consentInfo.client_logo} alt={consentInfo.client_name} preview={false} />
             ) : (
               <span>{consentInfo.client_name.charAt(0)}</span>
             )}

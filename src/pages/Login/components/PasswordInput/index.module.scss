@@ -1,8 +1,5 @@
 // 密码输入组件样式
 
-$primary-color: #0066ff;
-$primary-hover: #0052cc;
-
 .container {
   width: 100%;
 }
@@ -26,75 +23,5 @@ $primary-hover: #0052cc;
 }
 
 .form {
-  :global(.ant-form-item) {
-    margin-bottom: 16px;
-  }
-
-  :global(.ant-input-affix-wrapper) {
-    height: 44px;
-    border-radius: 10px;
-    border: 1px solid #e5e7eb;
-    background: #fff;
-    transition: all 0.2s ease;
-    padding: 0 12px;
-
-    &:hover {
-      border-color: #d1d5db;
-    }
-
-    :global(.ant-input) {
-      font-size: 14px;
-
-      &::placeholder {
-        color: #9ca3af;
-      }
-    }
-  }
-
-  :global(.ant-input-affix-wrapper-focused) {
-    border-color: $primary-color;
-    box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
-  }
-
-  :global(.ant-input-prefix) {
-    color: #9ca3af;
-    margin-right: 8px;
-
-    :global(.anticon) {
-      font-size: 16px;
-    }
-  }
-
-  :global(.ant-input-suffix) {
-    color: #9ca3af;
-    cursor: pointer;
-
-    &:hover {
-      color: #6b7280;
-    }
-  }
-}
-
-.submitButton {
-  height: 44px;
-  font-size: 15px;
-  font-weight: 500;
-  border-radius: 10px;
-  margin-top: 8px;
-  background: $primary-color;
-  border: none;
-  transition: all 0.2s ease;
-
-  &:hover:not(:disabled) {
-    background: $primary-hover;
-  }
-
-  &:active:not(:disabled) {
-    background: #0047b3;
-  }
-
-  &:disabled {
-    background: #d1d5db;
-    cursor: not-allowed;
-  }
+  width: 100%;
 }

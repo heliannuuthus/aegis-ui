@@ -9,6 +9,7 @@ import {
   LogoutOutlined,
 } from '@ant-design/icons';
 import { getProfile } from '@/services/api';
+import { showError } from '@/utils/error';
 import { passkeyUserCache } from '@/utils/passkeyCache';
 import type { UserProfile } from '@/types';
 import ProfileInfo from './components/ProfileInfo';
@@ -38,8 +39,7 @@ const ProfilePage = () => {
         picture: data.picture,
       });
     } catch (error: unknown) {
-      const err = error as { error_description?: string };
-      message.error(err.error_description || '获取用户信息失败');
+      showError(error);
       // 未登录则跳转到登录页
       navigate('/login');
     } finally {

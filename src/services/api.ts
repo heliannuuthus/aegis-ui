@@ -3,6 +3,7 @@ import type {
   ConnectionsMap,
   LoginRequest,
   LoginResponse,
+  RedirectAction,
   CreateChallengeRequest,
   CreateChallengeResponse,
   VerifyChallengeRequest,
@@ -21,25 +22,52 @@ import type {
   UpdateMFARequest,
   DeleteMFARequest,
   Identity,
+  IdentifyResponse,
+  ConfirmIdentifyRequest,
 } from '@/types';
 
 const api = axios.create({
   baseURL: '/api',
   timeout: 10000,
   withCredentials: true, // 携带 aegis-session Cookie
+  validateStatus: (status) => (status >= 200 && status < 300) || status === 300,
 });
 
-// 响应拦截器
+/**
+ * 解析 300 响应的 Location header 为 RedirectAction
+ */
+function parseRedirectAction(location: string): RedirectAction {
+  const url = new URL(location, window.location.origin);
+  const params = Object.fromEntries(url.searchParams);
+  const actions = (params.actions || '').split(',').filter(Boolean);
+  const { actions: _, ...rest } = params;
+  return {
+    location,
+    actions,
+    params: rest,
+  };
+}
+
+// 响应拦截器：300 解析为 RedirectAction，4xx/5xx 转为 AuthError
 api.interceptors.response.use(
-  (response) => response,
-  (error: AxiosError<AuthError>) => {
-    if (error.response?.data) {
-      return Promise.reject(error.response.data);
+  (response) => {
+    if (response.status === 300) {
+      const location = response.headers['location'];
+      if (!location) {
+        return Promise.reject({ status: 0 } satisfies AuthError);
+      }
+      response.data = parseRedirectAction(location);
     }
-    return Promise.reject({
-      error: 'network_error',
-      error_description: error.message,
-    });
+    return response;
+  },
+  (error: AxiosError) => {
+    const status = error.response?.status ?? 0;
+    const data = error.response?.data;
+    const authError: AuthError = {
+      status,
+      data: typeof data === 'object' && data !== null ? (data as Record<string, unknown>) : undefined,
+    };
+    return Promise.reject(authError);
   }
 );
 
@@ -61,12 +89,26 @@ export const getConnections = async (): Promise<ConnectionsMap> => {
 };
 
 /**
- * 发起登录（可能返回 challenge）
+ * 发起登录
+ * 300 → RedirectAction（前端需要执行 action 或跳转）
+ * 200 → LoginResponse（辅助验证完成等）
+ * 4xx → 抛出 AuthError
  */
-export const login = async (data: LoginRequest): Promise<LoginResponse> => {
-  const response = await api.post<LoginResponse>('/login', data);
+export const login = async (data: LoginRequest): Promise<LoginResponse | RedirectAction> => {
+  const response = await api.post<LoginResponse | RedirectAction>('/login', data);
   return response.data;
 };
+
+/** 类型守卫：判断响应是否为 RedirectAction */
+export function isRedirectAction(data: unknown): data is RedirectAction {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'actions' in data &&
+    'location' in data &&
+    Array.isArray((data as RedirectAction).actions)
+  );
+}
 
 /**
  * 发起 Challenge（三层模型：type / channel_type / channel）
@@ -81,7 +123,7 @@ export const initiateChallenge = async (
 /**
  * 继续 Challenge（提交验证）
  * @param challengeId Challenge ID（路径参数）
- * @param data 验证数据（{ type?, proof }）
+ * @param data 验证数据（{ type, proof }）— type 必填：前置条件时为 connection 名（如 "captcha"），主验证时为 channel_type 名（如 "email_otp"）
  */
 export const continueChallenge = async (
   challengeId: string,
@@ -169,6 +211,29 @@ export const getIdentities = async (): Promise<{ identities: Identity[] }> => {
  */
 export const unbindIdentity = async (idp: string): Promise<{ success: boolean }> => {
   const response = await api.delete(`/user/identities/${idp}`);
+  return response.data;
+};
+
+// ==================== 账户关联（Account Linking）API ====================
+
+/**
+ * 获取识别到的已有用户信息
+ * 仅在 flow 存在已识别用户时返回数据（HasIdentifiedUser: User != nil && State == Initialized）
+ */
+export const getIdentifyContext = async (): Promise<IdentifyResponse> => {
+  const response = await api.get<IdentifyResponse>('/binding');
+  return response.data;
+};
+
+/**
+ * 确认或取消账户关联
+ * confirm=true：将新 IDP 身份关联到已有用户，完成登录
+ * confirm=false：取消关联，回到登录页
+ */
+export const confirmIdentify = async (
+  data: ConfirmIdentifyRequest
+): Promise<RedirectAction> => {
+  const response = await api.post<RedirectAction>('/binding', data);
   return response.data;
 };
 

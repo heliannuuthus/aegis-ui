@@ -8,9 +8,9 @@ export type ConnectionType = 'idp' | 'vchan' | 'factor';
  *
  * 字段说明：
  * - type: 连接类型（idp / vchan / factor）
- * - connection: 标识（github, google, wechat-mp, user, oper, email_otp, captcha...）
+ * - connection: 标识（github, google, wechat-mp, user, staff, email_otp, captcha...）
  * - identifier: 公开标识（client_id / site_key / rp_id）
- * - strategy: 登录策略（仅 user/oper 需要：password, webauthn）
+ * - strategy: 登录策略（仅 user/staff 需要：password, webauthn）
  * - delegate: 可替代主认证的独立验证方式（email_otp, totp, webauthn），通过 Challenge 完成后以 ChallengeToken 作为 proof 登录
  * - require: 前置条件（captcha），登录前必须全部通过
  */
@@ -21,7 +21,7 @@ export interface Connection {
   connection: string;
   /** 公开标识（client_id / site_key / rp_id） */
   identifier?: string;
-  /** 登录策略（user/oper: password, webauthn; captcha: turnstile） */
+  /** 登录策略（user/staff: password, webauthn; captcha: turnstile） */
   strategy?: string[];
   /** 可替代主认证的独立验证方式（email_otp, totp, webauthn） */
   delegate?: string[];
@@ -116,24 +116,20 @@ export interface WebAuthnAssertionResponse {
 }
 
 /**
- * Captcha 配置（Challenge 前置条件）
+ * 前置条件配置
  */
-export interface CaptchaConfig {
-  /** 可用的 captcha provider（如 ["turnstile"]） */
-  strategy: string[];
-  /** 站点公钥（site_key） */
-  identifier: string;
+export interface ChallengeRequiredConfig {
+  /** 公开标识（如 site_key） */
+  identifier?: string;
+  /** 认证方式（如 turnstile） */
+  strategy?: string[];
 }
 
 /**
- * Challenge 前置条件
+ * Challenge 前置条件（对应后端 ChallengeRequired）
+ * JSON 结构: {"captcha": {"identifier": "xxx", "strategy": ["turnstile"]}}
  */
-export interface ChallengeRequired {
-  /** 人机验证配置（有值时展示 captcha 组件） */
-  captcha?: CaptchaConfig;
-  /** captcha 是否已验证 */
-  verified: boolean;
-}
+export type ChallengeRequired = Record<string, ChallengeRequiredConfig>;
 
 /**
  * 创建 Challenge 请求（三层模型：type / channel_type / channel）
@@ -143,7 +139,7 @@ export interface CreateChallengeRequest {
   client_id: string;
   /** 目标服务 ID */
   audience: string;
-  /** 业务场景（验证类必填，交换类忽略）：login / forget_password / bind_phone / bind_email */
+  /** 业务场景（验证类必填，交换类忽略）：verify / forget_password */
   type?: string;
   /** 验证方式 */
   channel_type: ChannelType;
@@ -157,18 +153,22 @@ export interface CreateChallengeRequest {
 export interface CreateChallengeResponse {
   /** Challenge ID */
   challenge_id: string;
+  /** 下次可重发的冷却时间（秒） */
+  retry_after?: number;
   /** 前置条件（captcha 未验证时有值） */
   required?: ChallengeRequired;
-  /** 限流，下次可发起的秒数 */
-  retry_after?: number;
+  /** WebAuthn 公钥选项（channel_type=webauthn 时返回） */
+  options?: Record<string, unknown>;
 }
 
 /**
  * 验证 Challenge 请求
  */
 export interface VerifyChallengeRequest {
-  /** captcha provider 类型（如 "turnstile"），仅 captcha 验证时传 */
-  type?: string;
+  /** 当前提交的验证类型（必填）：前置条件时为 connection 名（如 "captcha"），主验证时为 channel_type 名（如 "email_otp"） */
+  type: string;
+  /** 验证方式（如 "turnstile"），前置条件验证时必填 */
+  strategy?: string;
   /** 验证证明（OTP code / captcha token / WebAuthn assertion） */
   proof: unknown;
 }
@@ -183,8 +183,6 @@ export interface VerifyChallengeResponse {
   challenge_token?: string;
   /** 前置未完成时引导渲染 */
   required?: ChallengeRequired;
-  /** 限流 */
-  retry_after?: number;
 }
 
 /**
@@ -197,8 +195,8 @@ export interface ChallengeResponse {
   type: string;
   /** 提示信息（如：验证码已发送到 h***@gmail.com） */
   hint?: string;
-  /** 过期时间（秒） */
-  expires_in?: number;
+  /** 下次可重发的冷却时间（秒） */
+  retry_after?: number;
   /** 关联的 Connection（用于后续 Login） */
   connection?: string;
   /** 关联的 Principal（用于后续 Login） */
@@ -231,14 +229,30 @@ export interface LoginResponse {
   challenge?: ChallengeResponse;
 }
 
+// ==================== 300 Action Redirect ====================
+
+/**
+ * 300 指令式重定向响应（前端拦截器解析 Location header 后生成）
+ */
+export interface RedirectAction {
+  /** 原始 Location URL */
+  location: string;
+  /** 需要执行的 actions（从 ?action=captcha,totp 解析） */
+  actions: string[];
+  /** 其他 URL 参数 */
+  params: Record<string, string>;
+}
+
 // ==================== 错误处理 ====================
 
 /**
  * 错误响应
+ * 前端仅依赖 HTTP status 做流程控制；data 仅特定场景携带（429/428）
  */
 export interface AuthError {
-  error: string;
-  error_description?: string;
+  /** HTTP 状态码 */
+  status: number;
+  /** 附加数据（429: retry_after/challenge_id，428: required） */
   data?: Record<string, unknown>;
 }
 
@@ -443,4 +457,34 @@ export interface Identity {
 export interface UpdateProfileRequest {
   nickname?: string;
   picture?: string;
+}
+
+// ==================== 账户关联 ====================
+
+/**
+ * 被识别到的已有用户摘要
+ */
+export interface IdentifiedUser {
+  /** 昵称 */
+  nickname?: string;
+  /** 头像 URL */
+  picture?: string;
+}
+
+/**
+ * 识别到已有用户的响应
+ */
+export interface IdentifyResponse {
+  /** 当前登录的 IDP（github/google 等） */
+  connection: string;
+  /** 匹配到的已有用户 */
+  user?: IdentifiedUser;
+}
+
+/**
+ * 确认/取消关联请求
+ */
+export interface ConfirmIdentifyRequest {
+  /** true=确认关联，false=取消 */
+  confirm: boolean;
 }

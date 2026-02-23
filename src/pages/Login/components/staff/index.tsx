@@ -4,6 +4,7 @@ import type {
   Connection,
   ChallengeResponse,
   LoginResponse,
+  RedirectAction,
   AuthContext,
 } from '@/types';
 import { isWebAuthnSupported } from '../WebAuthn';
@@ -14,7 +15,7 @@ import styles from './index.module.scss';
 /** 登录步骤 */
 type LoginStep = 'email' | 'verify';
 
-interface OperLoginProps {
+interface StaffLoginProps {
   /** Connection 配置 */
   connection: Connection;
   /** Factor 配置列表（委托路径） */
@@ -27,25 +28,31 @@ interface OperLoginProps {
   loading?: boolean;
   /** 是否禁用 */
   disabled?: boolean;
+  /** 后端指示的待完成 actions（300 协议，seq 递增保证每次 300 触发 effect） */
+  pendingActions?: { seq: number; actions: string[] };
   /** 登录成功回调 */
   onLogin: (response: LoginResponse) => void;
+  /** 300 重定向回调 */
+  onRedirectAction: (action: RedirectAction) => void;
   /** Challenge 回调 */
   onChallenge: (challenge: ChallengeResponse) => void;
   /** 步骤变化回调（email: 输入邮箱阶段, verify: 验证阶段） */
   onStepChange?: (step: 'email' | 'verify') => void;
 }
 
-const OperLogin = ({
+const StaffLogin = ({
   connection,
   delegatedConnections,
   captchaConfig,
   authContext,
   loading = false,
   disabled = false,
+  pendingActions = { seq: 0, actions: [] },
   onLogin,
+  onRedirectAction,
   onChallenge,
   onStepChange,
-}: OperLoginProps) => {
+}: StaffLoginProps) => {
   const [step, setStep] = useState<LoginStep>('email');
   const [email, setEmail] = useState('');
   // 动画方向：forward = 向前（邮箱→验证），back = 返回
@@ -131,9 +138,11 @@ const OperLogin = ({
           authContext={authContext}
           requiresCaptcha={requiresCaptcha}
           captchaConfig={captchaConfig}
+          pendingActions={pendingActions}
           loading={globalLoading}
           onBack={handleBack}
           onLoginSuccess={onLogin}
+          onRedirectAction={onRedirectAction}
           onChallenge={onChallenge}
           onError={handleError}
         />
@@ -143,4 +152,4 @@ const OperLogin = ({
   );
 };
 
-export default OperLogin;
+export default StaffLogin;

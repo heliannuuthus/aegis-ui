@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Card, Spin } from 'antd';
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
-import { login } from '@/services/api';
-import { isFlowExpiredError, restartAuthFlow } from '@/utils/error';
+import { login, isRedirectAction } from '@/services/api';
+import { isFlowExpiredError, restartAuthFlow, getErrorMessage } from '@/utils/error';
+import { smartNavigate } from '@/utils/navigation';
 import type { AuthError } from '@/types';
 import styles from './index.module.scss';
 
@@ -10,7 +11,7 @@ import styles from './index.module.scss';
  * OAuth 回调页面
  * 处理第三方 IDP 登录后的回调
  * 路由: /:connection/callback
- * 
+ *
  * 流程:
  * 1. 从 URL path 获取 connection
  * 2. 从 URL query 获取 code 和 state
@@ -22,58 +23,55 @@ function CallbackPage() {
   const { connection } = useParams<{ connection: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const initiatedRef = useRef(false);
 
-  /**
-   * 跳转到登录页并携带错误信息
-   * 非致命错误使用 message 提示，用户可以重试
-   */
-  const navigateToLoginWithError = (error: string, errorDescription?: string) => {
-    navigate(`/login?error=${error}&error_description=${encodeURIComponent(errorDescription || '')}`);
+  /** 跳转到登录页并通过 state 传递错误消息 */
+  const navigateToLoginWithError = (errorMessage: string) => {
+    navigate('/login', { state: { errorMessage } });
   };
 
   useEffect(() => {
+    if (initiatedRef.current) return;
+    initiatedRef.current = true;
+
     const handleCallback = async () => {
       const code = searchParams.get('code');
       const state = searchParams.get('state');
       const error = searchParams.get('error');
       const errorDescription = searchParams.get('error_description');
 
-      // 如果有错误（来自 IDP 的错误），跳回登录页显示错误
+      // IDP 返回的错误（如用户取消授权），跳回登录页
       if (error) {
-        // access_denied 通常是用户在 IDP 页面取消了授权，跳回登录页即可
-        navigateToLoginWithError(error, errorDescription || undefined);
+        navigateToLoginWithError(errorDescription || error);
         return;
       }
 
-      // 如果没有 code 或 connection，也是错误
       if (!code || !connection) {
-        navigateToLoginWithError('invalid_request', '缺少必要的回调参数');
+        navigateToLoginWithError('缺少必要的回调参数');
         return;
       }
 
       // 验证 state（CSRF 防护）
       const savedState = sessionStorage.getItem('oauth_state');
-
       if (!savedState || savedState !== state) {
-        navigateToLoginWithError('state_mismatch', 'OAuth 状态验证失败，请重试');
+        navigateToLoginWithError('登录状态验证失败，请重试');
         return;
       }
 
-      // 清理 sessionStorage
       sessionStorage.removeItem('oauth_state');
 
       try {
-        // 调用 login 接口，将 OAuth code 作为 proof
         const response = await login({
           connection: connection,
           proof: code,
         });
 
-        // 如果有 redirect_uri，跳转到最终目标
-        if (response.redirect_uri) {
-          window.location.href = response.redirect_uri;
+        if (isRedirectAction(response)) {
+          // 内部路径用 SPA 路由，外部路径用整页跳转
+          smartNavigate(response.location, navigate);
+        } else if (response.location) {
+          smartNavigate(response.location, navigate);
         } else {
-          // 如果没有 redirect_uri，跳转到首页
           navigate('/');
         }
       } catch (err: unknown) {
@@ -82,16 +80,13 @@ function CallbackPage() {
           restartAuthFlow();
           return;
         }
-        // 其他错误跳回登录页，用 message 提示用户重试
-        navigateToLoginWithError(
-          authError.error || 'login_failed',
-          authError.error_description || '登录失败，请重试'
-        );
+        navigateToLoginWithError(getErrorMessage(authError));
       }
     };
 
     handleCallback();
-  }, [connection, searchParams, navigate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className={styles.container}>

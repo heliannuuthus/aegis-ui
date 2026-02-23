@@ -1,0 +1,169 @@
+// Staff 登录组件样式
+
+.container {
+  width: 100%;
+}
+
+.stepContainer {
+  animation: slideInRight 0.3s ease;
+}
+
+.stepContainerBack {
+  animation: slideInLeft 0.3s ease;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.form {
+  width: 100%;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e5e7eb;
+  }
+
+  span {
+    padding: 0 16px;
+    font-size: 13px;
+    color: #9ca3af;
+  }
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  background: #f9fafb;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.email {
+  font-size: 14px;
+  color: #374151;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.optionsTitle {
+  font-size: 15px;
+  font-weight: 500;
+  color: #374151;
+  margin: 0 0 16px;
+  text-align: center;
+}
+
+.optionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.captchaWrapper {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+// 居中内容容器
+.centerContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 0;
+  text-align: center;
+}
+
+// 发送中的加载动画
+.sendingSpinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #0066ff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.sendingText {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+// Captcha 提示文字
+.captchaHint {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 20px;
+  text-align: center;
+}
+
+// WebAuthn 验证样式
+.webauthnIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: #f0f7ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.webauthnTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 8px;
+}
+
+.webauthnHint {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 20px;
+}
+
+.errorHint {
+  font-size: 14px;
+  color: #ef4444;
+  margin: 0 0 20px;
+}

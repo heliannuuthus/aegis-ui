@@ -14,10 +14,6 @@
   border-radius: $radius-xl;
   box-shadow: $shadow-xl;
   border: none;
-
-  :global(.ant-card-body) {
-    padding: $spacing-xl;
-  }
 }
 
 .loading {

@@ -1,25 +1,37 @@
+/**
+ * iris 域名下的个人信息页面（/user/profile 子路由）
+ *
+ * 使用 irisApi（Bearer Token）替代原有的 Cookie API
+ */
+
 import { useState } from 'react';
 import { Form, Input, Button, message } from 'antd';
-import { updateProfile } from '@/services/api';
+import { useAuth } from '@/providers/AuthProvider';
+import { updateProfile } from '@/services/irisApi';
 import { showError } from '@/utils/error';
 import type { UserProfile, UpdateProfileRequest } from '@/types';
+import { useOutletContext } from 'react-router-dom';
 import styles from './ProfileInfo.module.scss';
 
-interface ProfileInfoProps {
-  profile: UserProfile;
-  onUpdate: () => void;
+interface UserLayoutContext {
+  profile: UserProfile | null;
+  reloadProfile: () => void;
 }
 
-const ProfileInfo = ({ profile, onUpdate }: ProfileInfoProps) => {
+const IrisProfileInfo = () => {
+  const { profile, reloadProfile } = useOutletContext<UserLayoutContext>();
+  const { auth } = useAuth();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+
+  if (!profile) return null;
 
   const handleSubmit = async (values: UpdateProfileRequest) => {
     try {
       setLoading(true);
-      await updateProfile(values);
+      await updateProfile(auth, values);
       message.success('资料更新成功');
-      onUpdate();
+      reloadProfile();
     } catch (error: unknown) {
       showError(error);
     } finally {
@@ -90,4 +102,4 @@ const ProfileInfo = ({ profile, onUpdate }: ProfileInfoProps) => {
   );
 };
 
-export default ProfileInfo;
+export default IrisProfileInfo;

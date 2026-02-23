@@ -1,3 +1,9 @@
+/**
+ * iris 域名下的安全设置页面（/user/security 子路由）
+ *
+ * 使用 irisApi（Bearer Token）替代原有的 Cookie API
+ */
+
 import { useState, useEffect } from 'react';
 import { Card, Button, message, Modal, Input, QRCode, Spin, Empty } from 'antd';
 import {
@@ -6,12 +12,13 @@ import {
   DeleteOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
+import { useAuth } from '@/providers/AuthProvider';
 import {
   getMFAStatus,
   setupMFA,
   verifyMFA,
   deleteMFA,
-} from '@/services/api';
+} from '@/services/irisApi';
 import { convertAttestationResponse, convertToPublicKeyCreationOptions } from '@/pages/Login/components/WebAuthn';
 import { passkeyUserCache } from '@/utils/passkeyCache';
 import { showError } from '@/utils/error';
@@ -23,27 +30,27 @@ import type {
 } from '@/types';
 import styles from './SecuritySettings.module.scss';
 
-const SecuritySettings = () => {
+const IrisSecuritySettings = () => {
+  const { auth } = useAuth();
   const [loading, setLoading] = useState(true);
   const [mfaStatus, setMfaStatus] = useState<MFAStatusResponse | null>(null);
 
-  // TOTP 设置状态
   const [totpModalVisible, setTotpModalVisible] = useState(false);
   const [totpSetup, setTotpSetup] = useState<SetupTOTPResponse | null>(null);
   const [totpCode, setTotpCode] = useState('');
   const [totpLoading, setTotpLoading] = useState(false);
 
-  // WebAuthn 设置状态
   const [webauthnLoading, setWebauthnLoading] = useState(false);
 
   useEffect(() => {
     loadMFAStatus();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadMFAStatus = async () => {
     try {
       setLoading(true);
-      const data = await getMFAStatus();
+      const data = await getMFAStatus(auth);
       setMfaStatus(data);
     } catch (error: unknown) {
       showError(error);
@@ -52,12 +59,10 @@ const SecuritySettings = () => {
     }
   };
 
-  // ==================== TOTP ====================
-
   const handleSetupTOTP = async () => {
     try {
       setTotpLoading(true);
-      const response = await setupMFA({ type: 'totp' });
+      const response = await setupMFA(auth, { type: 'totp' });
       if (response.type === 'totp') {
         setTotpSetup(response as SetupTOTPResponse);
         setTotpModalVisible(true);
@@ -71,10 +76,9 @@ const SecuritySettings = () => {
 
   const handleConfirmTOTP = async () => {
     if (!totpSetup || !totpCode) return;
-
     try {
       setTotpLoading(true);
-      await verifyMFA({
+      await verifyMFA(auth, {
         type: 'totp',
         credential_id: totpSetup.credential_id,
         code: totpCode,
@@ -101,7 +105,7 @@ const SecuritySettings = () => {
       cancelText: '取消',
       onOk: async () => {
         try {
-          await deleteMFA({ type: 'totp' });
+          await deleteMFA(auth, { type: 'totp' });
           message.success('TOTP 已删除');
           loadMFAStatus();
         } catch (error: unknown) {
@@ -111,33 +115,20 @@ const SecuritySettings = () => {
     });
   };
 
-  // ==================== WebAuthn ====================
-
   const handleSetupWebAuthn = async () => {
     try {
       setWebauthnLoading(true);
-
-      // 1. 开始注册
-      const beginResponse = await setupMFA({ type: 'webauthn', action: 'begin' });
+      const beginResponse = await setupMFA(auth, { type: 'webauthn', action: 'begin' });
       if (beginResponse.type !== 'webauthn' || !('options' in beginResponse)) {
         throw new Error('Invalid response');
       }
-
       const { options, challenge_id } = beginResponse as SetupWebAuthnBeginResponse;
-
-      // 2. 转换选项格式并调用 WebAuthn API
       const publicKeyOptions = convertToPublicKeyCreationOptions(options);
-      const credential = await navigator.credentials.create({
-        publicKey: publicKeyOptions,
-      });
+      const credential = await navigator.credentials.create({ publicKey: publicKeyOptions });
+      if (!credential) throw new Error('WebAuthn 注册被取消');
 
-      if (!credential) {
-        throw new Error('WebAuthn 注册被取消');
-      }
-
-      // 3. 序列化 credential 并完成注册
       const attestationResponse = convertAttestationResponse(credential as PublicKeyCredential);
-      const finishResponse = await setupMFA({
+      const finishResponse = await setupMFA(auth, {
         type: 'webauthn',
         action: 'finish',
         challenge_id,
@@ -146,7 +137,6 @@ const SecuritySettings = () => {
 
       if ('success' in finishResponse && finishResponse.success) {
         message.success('安全密钥添加成功');
-        // 注册成功后更新 passkey 缓存（如果有用户信息）
         passkeyUserCache.writeAfterRegistration();
         loadMFAStatus();
       } else {
@@ -169,17 +159,12 @@ const SecuritySettings = () => {
       cancelText: '取消',
       onOk: async () => {
         try {
-          await deleteMFA({ type: 'webauthn', credential_id: credentialId });
+          await deleteMFA(auth, { type: 'webauthn', credential_id: credentialId });
           message.success('安全密钥已删除');
-
-          // 如果删除后没有剩余的 passkey/webauthn 凭证，清除本地缓存
-          const remaining = webauthnCredentials?.filter(
-            (c) => c.credential_id !== credentialId
-          );
+          const remaining = webauthnCredentials?.filter((c) => c.credential_id !== credentialId);
           if (!remaining || remaining.length === 0) {
             passkeyUserCache.clear();
           }
-
           loadMFAStatus();
         } catch (error: unknown) {
           showError(error);
@@ -203,7 +188,6 @@ const SecuritySettings = () => {
 
   return (
     <div className={styles.container}>
-      {/* TOTP 验证器 */}
       <Card
         title={
           <span className={styles.cardTitle}>
@@ -246,7 +230,6 @@ const SecuritySettings = () => {
         )}
       </Card>
 
-      {/* WebAuthn / Passkey */}
       <Card
         title={
           <span className={styles.cardTitle}>
@@ -299,7 +282,6 @@ const SecuritySettings = () => {
         )}
       </Card>
 
-      {/* TOTP 设置弹窗 */}
       <Modal
         title="设置验证器应用"
         open={totpModalVisible}
@@ -317,12 +299,10 @@ const SecuritySettings = () => {
             <div className={styles.qrcode}>
               <QRCode value={totpSetup.otpauth_uri} size={200} />
             </div>
-
             <p className={styles.totpStep}>或手动输入密钥:</p>
             <div className={styles.secretKey}>
               <code>{totpSetup.secret}</code>
             </div>
-
             <p className={styles.totpStep}>2. 输入验证器显示的 6 位验证码</p>
             <Input
               placeholder="000000"
@@ -331,7 +311,6 @@ const SecuritySettings = () => {
               maxLength={6}
               className={styles.codeInput}
             />
-
             <Button
               type="primary"
               block
@@ -348,4 +327,4 @@ const SecuritySettings = () => {
   );
 };
 
-export default SecuritySettings;
+export default IrisSecuritySettings;

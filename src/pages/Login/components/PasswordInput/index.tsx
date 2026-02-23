@@ -1,18 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Form, Input, Button } from 'antd';
 import { LockOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import styles from './index.module.scss';
 
 interface PasswordInputProps {
-  /** 用户邮箱（显示用） */
   email: string;
-  /** 是否正在加载 */
   loading?: boolean;
-  /** 是否禁用 */
   disabled?: boolean;
-  /** 插槽：渲染在密码输入框和登录按钮之间（如 captcha） */
-  beforeSubmit?: React.ReactNode;
-  /** 提交回调 */
   onSubmit: (password: string) => void;
 }
 
@@ -20,7 +14,6 @@ const PasswordInput = ({
   email,
   loading = false,
   disabled = false,
-  beforeSubmit,
   onSubmit,
 }: PasswordInputProps) => {
   const [form] = Form.useForm();
@@ -30,14 +23,16 @@ const PasswordInput = ({
     onSubmit(values.password);
   };
 
+  const submitButtonStyle = useMemo<React.CSSProperties>(() => ({
+    marginTop: 8,
+  }), []);
+
   return (
     <div className={styles.container}>
-      {/* 用户信息 */}
       <div className={styles.userInfo}>
         <span className={styles.email}>{email}</span>
       </div>
 
-      {/* 密码表单 */}
       <Form
         form={form}
         layout="vertical"
@@ -63,9 +58,6 @@ const PasswordInput = ({
           />
         </Form.Item>
 
-        {/* 插槽：密码输入框和登录按钮之间（captcha 等） */}
-        {beforeSubmit}
-
         <Form.Item>
           <Button
             type="primary"
@@ -74,7 +66,7 @@ const PasswordInput = ({
             block
             loading={loading}
             disabled={disabled}
-            className={styles.submitButton}
+            style={submitButtonStyle}
           >
             登录
           </Button>
