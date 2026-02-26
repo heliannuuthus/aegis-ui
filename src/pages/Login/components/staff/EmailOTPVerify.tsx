@@ -8,6 +8,7 @@ import type {
 } from '@/types';
 import { initiateChallenge, continueChallenge, login, isRedirectAction } from '@/services/api';
 import { isRateLimitError, getRateLimitData, showError, isChallengeExpiredError, isPreconditionRequiredError } from '@/utils/error';
+import { CHALLENGE_AUDIENCE } from '@/config/env';
 import CaptchaModal from '@/components/CaptchaModal';
 import ChallengeVerify from '../ChallengeVerify';
 import styles from './index.module.scss';
@@ -141,8 +142,8 @@ const EmailOTPVerify = ({
     try {
       const challengeResponse = await initiateChallenge({
         client_id: authContext.application.app_id,
-        audience: authContext.service.service_id,
-        type: 'verify',
+        audience: CHALLENGE_AUDIENCE,
+        type: 'staff:verify',
         channel_type: 'email_otp',
         channel: email,
       });

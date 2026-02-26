@@ -9,6 +9,7 @@ import type {
   WebAuthnRequestOptions,
 } from '@/types';
 import { initiateChallenge, continueChallenge, login, isRedirectAction } from '@/services/api';
+import { CHALLENGE_AUDIENCE } from '@/config/env';
 import { isRateLimitError, getRateLimitData } from '@/utils/error';
 import styles from './index.module.scss';
 
@@ -52,8 +53,8 @@ const WebAuthnVerify = ({
     try {
       const challengeResp = await initiateChallenge({
         client_id: authContext.application.app_id,
-        audience: authContext.service.service_id,
-        type: 'verify',
+        audience: CHALLENGE_AUDIENCE,
+        type: 'staff:verify',
         channel_type: 'webauthn',
         channel: email,
       });

@@ -29,6 +29,9 @@ export function getIrisApiBase(): string {
   return '/api';
 }
 
+/** Challenge 验证的固定 audience（身份验证归属 iris 用户服务） */
+export const CHALLENGE_AUDIENCE = 'iris';
+
 /** aegis-sdk 配置 */
 export const IRIS_AUTH_CONFIG = {
   /** 平台个人中心在 hermes 注册的 client_id */

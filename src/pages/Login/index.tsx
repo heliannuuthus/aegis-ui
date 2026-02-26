@@ -12,6 +12,7 @@ import {
   isRedirectAction,
 } from '@/services/api';
 import { showError, isFlowExpiredError, restartAuthFlow, isRateLimitError, getRateLimitData } from '@/utils/error';
+import { CHALLENGE_AUDIENCE } from '@/config/env';
 import { smartNavigate } from '@/utils/navigation';
 import { passkeyUserCache } from '@/utils/passkeyCache';
 import type {
@@ -327,8 +328,8 @@ const LoginPage = () => {
     // 1. 创建 WebAuthn challenge（后端返回 challenge_id + options）
     const challengeResp = await initiateChallenge({
       client_id: authContext.application.app_id,
-      audience: authContext.service.service_id,
-      type: 'verify',
+      audience: CHALLENGE_AUDIENCE,
+      type: 'passkey:verify',
       channel_type: 'webauthn',
       channel: '',
     });
