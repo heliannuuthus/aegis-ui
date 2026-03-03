@@ -9,11 +9,15 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, 'src'),
     },
+    dedupe: ['react', 'react-dom'],
+  },
+  optimizeDeps: {
+    include: ['@marsidev/react-turnstile'],
   },
   server: {
     host: '0.0.0.0',
     port: 13000,
-    allowedHosts: ['aegis.heliannuuthus.com'],
+    allowedHosts: ['aegis.heliannuuthus.com', 'iris.heliannuuthus.com'],
     hmr: false,
     proxy: {
       '/api': {

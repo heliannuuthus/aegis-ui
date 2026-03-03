@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Form, Input, Button, message } from 'antd';
 import { updateProfile } from '@/services/api';
+import { showError } from '@/utils/error';
 import type { UserProfile, UpdateProfileRequest } from '@/types';
 import styles from './ProfileInfo.module.scss';
 
@@ -20,8 +21,7 @@ const ProfileInfo = ({ profile, onUpdate }: ProfileInfoProps) => {
       message.success('资料更新成功');
       onUpdate();
     } catch (error: unknown) {
-      const err = error as { error_description?: string };
-      message.error(err.error_description || '更新失败');
+      showError(error);
     } finally {
       setLoading(false);
     }

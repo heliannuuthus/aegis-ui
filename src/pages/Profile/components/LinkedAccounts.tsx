@@ -9,6 +9,7 @@ import {
   LinkOutlined,
 } from '@ant-design/icons';
 import { getIdentities, unbindIdentity } from '@/services/api';
+import { showError } from '@/utils/error';
 import type { Identity } from '@/types';
 import styles from './LinkedAccounts.module.scss';
 
@@ -16,8 +17,8 @@ import styles from './LinkedAccounts.module.scss';
 const idpConfig: Record<string, { icon: React.ReactNode; name: string; color: string }> = {
   github: { icon: <GithubOutlined />, name: 'GitHub', color: '#24292e' },
   google: { icon: <GoogleOutlined />, name: 'Google', color: '#4285f4' },
-  'wechat:mp': { icon: <WechatOutlined />, name: '微信', color: '#07c160' },
-  'alipay:mp': { icon: <AlipayCircleOutlined />, name: '支付宝', color: '#1677ff' },
+  'wechat-mp': { icon: <WechatOutlined />, name: '微信', color: '#07c160' },
+  'alipay-mp': { icon: <AlipayCircleOutlined />, name: '支付宝', color: '#1677ff' },
 };
 
 const LinkedAccounts = () => {
@@ -34,8 +35,7 @@ const LinkedAccounts = () => {
       const data = await getIdentities();
       setIdentities(data.identities || []);
     } catch (error: unknown) {
-      const err = error as { error_description?: string };
-      message.error(err.error_description || '获取关联账号失败');
+      showError(error);
     } finally {
       setLoading(false);
     }
@@ -56,8 +56,7 @@ const LinkedAccounts = () => {
           message.success(`${config.name} 已解绑`);
           loadIdentities();
         } catch (error: unknown) {
-          const err = error as { error_description?: string };
-          message.error(err.error_description || '解绑失败');
+          showError(error);
         }
       },
     });

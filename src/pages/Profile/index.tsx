@@ -9,6 +9,8 @@ import {
   LogoutOutlined,
 } from '@ant-design/icons';
 import { getProfile } from '@/services/api';
+import { showError } from '@/utils/error';
+import { passkeyUserCache } from '@/utils/passkeyCache';
 import type { UserProfile } from '@/types';
 import ProfileInfo from './components/ProfileInfo';
 import SecuritySettings from './components/SecuritySettings';
@@ -30,9 +32,14 @@ const ProfilePage = () => {
       setLoading(true);
       const data = await getProfile();
       setProfile(data);
+      // 暂存用户信息，供 Passkey 注册成功后写入缓存
+      passkeyUserCache.setPendingUserInfo({
+        uid: data.id,
+        nickname: data.nickname || '用户',
+        picture: data.picture,
+      });
     } catch (error: unknown) {
-      const err = error as { error_description?: string };
-      message.error(err.error_description || '获取用户信息失败');
+      showError(error);
       // 未登录则跳转到登录页
       navigate('/login');
     } finally {

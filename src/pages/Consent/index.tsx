@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Button, Spin, Avatar } from 'antd';
+import { Button, Image, Spin, Avatar } from 'antd';
 import { LoadingOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import api from '@/services/api';
-import { showError, shouldRedirectToError } from '@/utils/error';
+import { showError, isFlowExpiredError, restartAuthFlow } from '@/utils/error';
+import { smartNavigate } from '@/utils/navigation';
 import type { AuthError } from '@/types';
 import styles from './index.module.scss';
 
@@ -89,17 +90,18 @@ function ConsentPage() {
         setSelectedScopes(requiredScopes);
       } catch (error: unknown) {
         const err = error as AuthError;
-        if (shouldRedirectToError(err)) {
-          navigate(`/error?error=${err.error}&error_description=${encodeURIComponent(err.error_description || '')}`);
-        } else {
-          showError(error);
+        if (isFlowExpiredError(err)) {
+          restartAuthFlow();
+          return;
         }
+        showError(error);
       } finally {
         setLoading(false);
       }
     };
     fetchConsentInfo();
-  }, [navigate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 处理授权
   const handleConsent = async () => {
@@ -108,7 +110,8 @@ function ConsentPage() {
       const response = await api.post<{ redirect_uri: string }>('/consent', {
         scopes: selectedScopes,
       });
-      window.location.href = response.data.redirect_uri;
+      // 授权成功后跳转：内部路径用 SPA 路由，外部路径（回调到 atlas）用整页跳转
+      smartNavigate(response.data.redirect_uri, navigate);
     } catch (error: unknown) {
       showError(error);
     } finally {
@@ -121,7 +124,8 @@ function ConsentPage() {
     setSubmitting(true);
     try {
       await api.post('/consent/deny');
-      window.history.back();
+      // 拒绝授权后返回登录页
+      navigate('/login', { replace: true });
     } catch (error) {
       showError(error);
     } finally {
@@ -166,7 +170,7 @@ function ConsentPage() {
         <div className={styles.connectionIndicator}>
           <div className={styles.appIcon}>
             {consentInfo.client_logo ? (
-              <img src={consentInfo.client_logo} alt={consentInfo.client_name} />
+              <Image src={consentInfo.client_logo} alt={consentInfo.client_name} preview={false} />
             ) : (
               <span>{consentInfo.client_name.charAt(0)}</span>
             )}

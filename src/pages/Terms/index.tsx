@@ -1,3 +1,4 @@
+import { Button } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import styles from './index.module.scss';
@@ -25,10 +26,9 @@ const TermsPage = () => {
       <div className={styles.card}>
         {/* 头部 */}
         <header className={styles.header}>
-          <button className={styles.backButton} onClick={handleBack}>
-            <ArrowLeftOutlined />
-            <span>返回</span>
-          </button>
+          <Button type="link" className={styles.backButton} icon={<ArrowLeftOutlined />} onClick={handleBack}>
+            返回
+          </Button>
           <div className={styles.headerContent}>
             <h1 className={styles.title}>服务条款</h1>
             <p className={styles.updateTime}>
@@ -42,16 +42,16 @@ const TermsPage = () => {
         <nav className={styles.toc}>
           <h3 className={styles.tocTitle}>目录</h3>
           <ul className={styles.tocList}>
-            <li><button onClick={() => scrollToSection('acceptance')}>1. 服务协议的接受</button></li>
-            <li><button onClick={() => scrollToSection('services')}>2. 服务说明</button></li>
-            <li><button onClick={() => scrollToSection('account')}>3. 用户账户</button></li>
-            <li><button onClick={() => scrollToSection('conduct')}>4. 用户行为规范</button></li>
-            <li><button onClick={() => scrollToSection('ip')}>5. 知识产权</button></li>
-            <li><button onClick={() => scrollToSection('disclaimer')}>6. 免责声明</button></li>
-            <li><button onClick={() => scrollToSection('liability')}>7. 责任限制</button></li>
-            <li><button onClick={() => scrollToSection('changes')}>8. 条款修改</button></li>
-            <li><button onClick={() => scrollToSection('law')}>9. 适用法律与争议解决</button></li>
-            <li><button onClick={() => scrollToSection('contact')}>10. 联系我们</button></li>
+            <li><Button type="link" onClick={() => scrollToSection('acceptance')}>1. 服务协议的接受</Button></li>
+            <li><Button type="link" onClick={() => scrollToSection('services')}>2. 服务说明</Button></li>
+            <li><Button type="link" onClick={() => scrollToSection('account')}>3. 用户账户</Button></li>
+            <li><Button type="link" onClick={() => scrollToSection('conduct')}>4. 用户行为规范</Button></li>
+            <li><Button type="link" onClick={() => scrollToSection('ip')}>5. 知识产权</Button></li>
+            <li><Button type="link" onClick={() => scrollToSection('disclaimer')}>6. 免责声明</Button></li>
+            <li><Button type="link" onClick={() => scrollToSection('liability')}>7. 责任限制</Button></li>
+            <li><Button type="link" onClick={() => scrollToSection('changes')}>8. 条款修改</Button></li>
+            <li><Button type="link" onClick={() => scrollToSection('law')}>9. 适用法律与争议解决</Button></li>
+            <li><Button type="link" onClick={() => scrollToSection('contact')}>10. 联系我们</Button></li>
           </ul>
         </nav>
 

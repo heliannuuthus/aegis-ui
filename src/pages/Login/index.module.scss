@@ -67,20 +67,17 @@ $bg-color: #f8fafc;
 // ========================================
 
 .logo {
-  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   margin-bottom: 24px;
+  height: 48px;
 
-  svg,
-  img {
+  svg {
     width: 48px;
     height: 48px;
     border-radius: 12px;
-    object-fit: contain;
-    transition: transform 0.2s ease;
-
-    &:hover {
-      transform: scale(1.05);
-    }
+    flex-shrink: 0;
   }
 }
 
@@ -208,10 +205,6 @@ $bg-color: #f8fafc;
 .loadingState {
   text-align: center;
   padding: 48px 0;
-
-  :global(.ant-spin) {
-    color: $primary-color;
-  }
 
   p {
     margin-top: 16px;
