@@ -9,7 +9,7 @@ import type {
 } from '@/types';
 import { login, isRedirectAction } from '@/services/api';
 import { isRateLimitError, getRateLimitData, showError } from '@/utils/error';
-import CaptchaModal from '@/components/CaptchaModal';
+import CaptchaStep from '@/components/CaptchaStep';
 import styles from './index.module.scss';
 
 interface PasswordVerifyProps {
@@ -24,12 +24,7 @@ interface PasswordVerifyProps {
   onError: (error: Error) => void;
 }
 
-interface CaptchaModalState {
-  open: boolean;
-  siteKey: string;
-  strategy: string;
-  pendingPassword: string | null;
-}
+type ViewState = 'captcha' | 'password';
 
 const PasswordVerify = ({
   email,
@@ -47,28 +42,20 @@ const PasswordVerify = ({
   const [isLoading, setIsLoading] = useState(false);
   const [captchaVerified, setCaptchaVerified] = useState(false);
   const [dynamicRequireCaptcha, setDynamicRequireCaptcha] = useState(false);
-  const [captchaModal, setCaptchaModal] = useState<CaptchaModalState>({
-    open: false,
-    siteKey: '',
-    strategy: '',
-    pendingPassword: null,
-  });
   const lastPendingSeqRef = useRef(0);
 
   const needsCaptcha = (requiresCaptcha || dynamicRequireCaptcha) && !!captchaConfig;
+  const initialView: ViewState = needsCaptcha ? 'captcha' : 'password';
+  const [viewState, setViewState] = useState<ViewState>(initialView);
 
-  // 处理后端动态追加的 captcha 要求
   if (pendingActions.seq !== 0 && pendingActions.seq !== lastPendingSeqRef.current) {
     lastPendingSeqRef.current = pendingActions.seq;
     if (pendingActions.actions.some((a) => captchaConfig && a === captchaConfig.connection)) {
       setDynamicRequireCaptcha(true);
       setCaptchaVerified(false);
+      setViewState('captcha');
     }
   }
-
-  const closeCaptchaModal = useCallback(() => {
-    setCaptchaModal(prev => ({ ...prev, open: false, pendingPassword: null }));
-  }, []);
 
   const performLogin = useCallback(async (password: string) => {
     const response = await login({
@@ -87,34 +74,23 @@ const PasswordVerify = ({
     }
   }, [email, onLoginSuccess, onRedirectAction, onChallenge]);
 
-  const handleCaptchaSuccess = useCallback(async (_challengeId: string, token: string) => {
-    const pendingPassword = captchaModal.pendingPassword;
-    
+  const handleCaptchaSuccess = useCallback(async (token: string) => {
     try {
       const captchaResp = await login({
         connection: 'captcha',
         strategy: captchaConfig?.strategy?.[0] ?? 'turnstile',
         proof: token,
       });
-      
+
       if (isRedirectAction(captchaResp)) {
         if (captchaResp.actions.length > 0) {
           onRedirectAction(captchaResp);
           return;
         }
       }
-      
-      setCaptchaVerified(true);
-      closeCaptchaModal();
 
-      if (pendingPassword) {
-        setIsLoading(true);
-        try {
-          await performLogin(pendingPassword);
-        } finally {
-          setIsLoading(false);
-        }
-      }
+      setCaptchaVerified(true);
+      setViewState('password');
     } catch (error) {
       if (isRateLimitError(error)) {
         const info = getRateLimitData(error);
@@ -122,24 +98,13 @@ const PasswordVerify = ({
       } else {
         showError(error);
       }
-      throw error;
+      setViewState('captcha');
     }
-  }, [captchaModal.pendingPassword, captchaConfig, onRedirectAction, closeCaptchaModal, performLogin]);
+  }, [captchaConfig, onRedirectAction]);
 
   const handleSubmit = useCallback(async (values: { password: string }) => {
     setIsLoading(true);
     try {
-      if (needsCaptcha && !captchaVerified) {
-        setCaptchaModal({
-          open: true,
-          siteKey: captchaConfig?.identifier || '',
-          strategy: captchaConfig?.strategy?.[0] ?? 'turnstile',
-          pendingPassword: values.password,
-        });
-        setIsLoading(false);
-        return;
-      }
-
       await performLogin(values.password);
     } catch (error) {
       if (isRateLimitError(error)) {
@@ -151,7 +116,7 @@ const PasswordVerify = ({
     } finally {
       setIsLoading(false);
     }
-  }, [needsCaptcha, captchaVerified, captchaConfig, performLogin, onError]);
+  }, [performLogin, onError]);
 
   const backButtonStyle = useMemo<React.CSSProperties>(() => ({
     display: 'flex',
@@ -166,6 +131,16 @@ const PasswordVerify = ({
     height: 'auto',
     boxShadow: 'none',
   }), []);
+
+  if (viewState === 'captcha' && captchaConfig) {
+    return (
+      <CaptchaStep
+        siteKey={captchaConfig.identifier}
+        onSuccess={handleCaptchaSuccess}
+        onCancel={onBack}
+      />
+    );
+  }
 
   return (
     <div>
@@ -221,14 +196,6 @@ const PasswordVerify = ({
           </Button>
         </Form.Item>
       </Form>
-
-      <CaptchaModal
-        open={captchaModal.open}
-        siteKey={captchaModal.siteKey}
-        challengeId=""
-        onSuccess={handleCaptchaSuccess}
-        onCancel={closeCaptchaModal}
-      />
     </div>
   );
 };

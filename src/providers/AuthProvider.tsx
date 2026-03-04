@@ -7,8 +7,7 @@
 
 import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import type { ReactNode } from 'react';
-import { createWebAuth } from '@aegis/sdk/web';
-import type { WebAuth } from '@aegis/sdk/web';
+import { WebAuth } from '@aegis/sdk/web';
 import {
   getAegisEndpoint,
   getCallbackUri,
@@ -35,21 +34,10 @@ let webAuthInstance: WebAuth | null = null;
 
 function getWebAuth(): WebAuth {
   if (!webAuthInstance) {
-    webAuthInstance = createWebAuth({
+    webAuthInstance = new WebAuth({
       endpoint: getAegisEndpoint(),
       clientId: IRIS_AUTH_CONFIG.clientId,
       redirectUri: getCallbackUri(),
-      defaultAudience: IRIS_AUTH_CONFIG.audience,
-      defaultScopes: [...IRIS_AUTH_CONFIG.defaultScopes],
-      defaultAudiences: {
-        [IRIS_AUTH_CONFIG.audience]: {
-          scope: IRIS_AUTH_CONFIG.defaultScopes.join(' '),
-        },
-      },
-      profileEndpoint: window.location.origin,
-      profileAudience: IRIS_AUTH_CONFIG.audience,
-      defaultRedirectPath: IRIS_AUTH_CONFIG.defaultRedirectPath,
-      debug: import.meta.env.DEV,
     });
   }
   return webAuthInstance;
@@ -76,7 +64,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = async () => {
     const auth = authRef.current;
-    await auth.loginWithRedirect({
+    await auth.authorize({
       audience: IRIS_AUTH_CONFIG.audience,
       scopes: [...IRIS_AUTH_CONFIG.defaultScopes],
     });

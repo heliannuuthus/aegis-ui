@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Button, Input } from 'antd';
-import { ArrowLeftOutlined, ReloadOutlined, MailOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useCountDown } from 'ahooks';
 import type { ChallengeResponse } from '@/types';
 import styles from './index.module.scss';
@@ -8,32 +8,12 @@ import styles from './index.module.scss';
 interface ChallengeVerifyProps {
   challenge: ChallengeResponse;
   loading?: boolean;
+  /** 验证码正在发送中（异步） */
+  sending?: boolean;
   onContinue: (code: string) => void;
   onCancel: () => void;
   onResend?: () => void;
 }
-
-const emailProviders: Record<string, { name: string; url: string }> = {
-  'gmail.com': { name: 'Gmail', url: 'https://mail.google.com' },
-  'googlemail.com': { name: 'Gmail', url: 'https://mail.google.com' },
-  'outlook.com': { name: 'Outlook', url: 'https://outlook.live.com' },
-  'hotmail.com': { name: 'Outlook', url: 'https://outlook.live.com' },
-  'live.com': { name: 'Outlook', url: 'https://outlook.live.com' },
-  'yahoo.com': { name: 'Yahoo', url: 'https://mail.yahoo.com' },
-  'qq.com': { name: 'QQ邮箱', url: 'https://mail.qq.com' },
-  'foxmail.com': { name: 'QQ邮箱', url: 'https://mail.qq.com' },
-  '163.com': { name: '网易邮箱', url: 'https://mail.163.com' },
-  '126.com': { name: '网易邮箱', url: 'https://mail.126.com' },
-  'yeah.net': { name: '网易邮箱', url: 'https://mail.yeah.net' },
-  'icloud.com': { name: 'iCloud', url: 'https://www.icloud.com/mail' },
-  'me.com': { name: 'iCloud', url: 'https://www.icloud.com/mail' },
-};
-
-const getEmailProviderInfo = (email: string) => {
-  const domain = email.split('@')[1]?.toLowerCase();
-  if (!domain) return null;
-  return emailProviders[domain] || null;
-};
 
 const maskEmail = (email: string): string => {
   const [local, domain] = email.split('@');
@@ -48,6 +28,7 @@ const RESEND_COOLDOWN = 60;
 const ChallengeVerify = ({
   challenge,
   loading,
+  sending = false,
   onContinue,
   onCancel,
   onResend,
@@ -57,6 +38,15 @@ const ChallengeVerify = ({
   const [resendTargetDate, setResendTargetDate] = useState<number>(
     Date.now() + retryAfter * 1000
   );
+
+  const prevChallengeRef = useRef({ id: challenge.challenge_id, retryAfter });
+  useEffect(() => {
+    const prev = prevChallengeRef.current;
+    if (challenge.challenge_id !== prev.id || retryAfter !== prev.retryAfter) {
+      prevChallengeRef.current = { id: challenge.challenge_id, retryAfter };
+      setResendTargetDate(Date.now() + retryAfter * 1000);
+    }
+  }, [challenge.challenge_id, retryAfter]);
 
   const [resendCountdown] = useCountDown({ targetDate: resendTargetDate });
   const resendSeconds = Math.round(resendCountdown / 1000);
@@ -78,7 +68,6 @@ const ChallengeVerify = ({
     }
   };
 
-  const emailProvider = challenge.principal ? getEmailProviderInfo(challenge.principal) : null;
   const maskedEmail = challenge.principal ? maskEmail(challenge.principal) : null;
 
   const backButtonStyle = useMemo<React.CSSProperties>(() => ({
@@ -156,26 +145,13 @@ const ChallengeVerify = ({
           <h3 className={styles.title}>输入验证码</h3>
         </div>
 
-        {maskedEmail && (
-          <p className={styles.hint}>
-            已发送至 {maskedEmail}
-          </p>
-        )}
-
-        <div className={styles.otpSection}>
-          <Input.OTP
-            length={CODE_LENGTH}
-            value={code}
-            onChange={handleOTPChange}
-            disabled={loading}
-            autoFocus
-            size="large"
-            styles={{ input: otpInputStyle }}
-          />
-        </div>
-
-        <div className={styles.actions}>
-          {onResend && (
+        <div className={styles.hintRow}>
+          {maskedEmail && (
+            <span className={styles.hint}>已发送至 {maskedEmail}</span>
+          )}
+          {sending ? (
+            <span className={styles.sendingHint}>发送中...</span>
+          ) : onResend ? (
             <Button
               type="link"
               size="small"
@@ -185,19 +161,19 @@ const ChallengeVerify = ({
             >
               {canResend ? '重新发送' : `${resendSeconds}s 后重发`}
             </Button>
-          )}
+          ) : null}
+        </div>
 
-          {challenge.type === 'email_otp' && emailProvider && (
-            <a
-              href={emailProvider.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.emailLink}
-            >
-              <MailOutlined style={{ fontSize: 12 }} />
-              打开{emailProvider.name}
-            </a>
-          )}
+        <div className={styles.otpSection}>
+          <Input.OTP
+            length={CODE_LENGTH}
+            value={code}
+            onChange={handleOTPChange}
+            disabled={loading || sending}
+            autoFocus
+            size="large"
+            styles={{ input: otpInputStyle }}
+          />
         </div>
       </div>
     </div>
