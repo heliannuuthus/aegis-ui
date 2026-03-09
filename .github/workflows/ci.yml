@@ -11,4 +11,4 @@ permissions:
 
 jobs:
   ci:
-    uses: heliannuuthus/hephaestus/.github/workflows/ci-frontend.yml@refactor/composite-actions
+    uses: heliannuuthus/hephaestus/.github/workflows/ci-frontend.yml@main
