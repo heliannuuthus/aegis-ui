@@ -323,7 +323,6 @@ const LoginPage = () => {
   const idpConnections: Connection[] = (connections.idp ?? []).filter(
     (c) =>
       c.connection !== 'staff' &&
-      c.connection !== 'oper' &&
       c.connection !== 'passkey' &&
       c.connection !== 'email' &&
       !(c.connection === 'user' && (!c.delegate || c.delegate.length === 0)) &&
