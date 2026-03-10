@@ -157,7 +157,9 @@ const UserLayout = () => {
                 </Button>
               </div>
               <div className={styles.userInfo}>
-                <h1 className={styles.nickname}>{profile.nickname || '用户'}</h1>
+                <h1 className={styles.nickname}>
+                  {profile.nickname || '用户'}
+                </h1>
                 <p className={styles.userId}>ID: {profile.id}</p>
                 {profile.email && (
                   <p className={styles.email}>
@@ -189,7 +191,9 @@ const UserLayout = () => {
             items={tabItems}
             className={styles.tabs}
           />
-          <Outlet context={{ profile, reloadProfile: () => window.location.reload() }} />
+          <Outlet
+            context={{ profile, reloadProfile: () => window.location.reload() }}
+          />
         </Card>
       </div>
     </div>

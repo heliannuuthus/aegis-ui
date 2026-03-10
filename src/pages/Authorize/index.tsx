@@ -2,7 +2,11 @@ import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Spin } from 'antd';
 import api, { isRedirectAction } from '@/services/api';
-import { isFlowExpiredError, restartAuthFlow, getErrorMessage } from '@/utils/error';
+import {
+  isFlowExpiredError,
+  restartAuthFlow,
+  getErrorMessage,
+} from '@/utils/error';
 import { smartNavigate } from '@/utils/navigation';
 
 import type { AuthError } from '@/types';
@@ -101,7 +105,8 @@ const AuthorizePage = () => {
             state,
           });
           if (codeChallenge) formData.set('code_challenge', codeChallenge);
-          if (codeChallengeMethod) formData.set('code_challenge_method', codeChallengeMethod);
+          if (codeChallengeMethod)
+            formData.set('code_challenge_method', codeChallengeMethod);
           if (redirectUri) formData.set('redirect_uri', redirectUri);
           response = await api.post('/authorize', formData.toString(), {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -159,7 +164,15 @@ const AuthorizePage = () => {
         <div className={styles.card}>
           <div className={styles.error}>
             <div className={styles.errorIcon}>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <circle cx="12" cy="12" r="10" />
                 <line x1="15" y1="9" x2="9" y2="15" />
                 <line x1="9" y1="9" x2="15" y2="15" />

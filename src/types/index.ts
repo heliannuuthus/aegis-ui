@@ -39,7 +39,14 @@ export type ConnectionsMap = Partial<Record<ConnectionType, Connection[]>>;
 // ==================== Challenge 流程 ====================
 
 /** Channel Type（验证方式） */
-export type ChannelType = 'email_otp' | 'totp' | 'webauthn' | 'sms_otp' | 'tg_otp' | 'wechat-mp' | 'alipay-mp';
+export type ChannelType =
+  | 'email_otp'
+  | 'totp'
+  | 'webauthn'
+  | 'sms_otp'
+  | 'tg_otp'
+  | 'wechat-mp'
+  | 'alipay-mp';
 
 // ==================== WebAuthn 相关 ====================
 

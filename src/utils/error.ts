@@ -56,7 +56,9 @@ export function isRateLimitError(error: unknown): boolean {
  * 从 429 错误中提取限流数据
  * @returns retry_after（秒）和可选的 challenge_id，非 429 返回 null
  */
-export function getRateLimitData(error: unknown): { retryAfter: number; challengeId?: string } | null {
+export function getRateLimitData(
+  error: unknown
+): { retryAfter: number; challengeId?: string } | null {
   const authError = error as AuthError;
   if (authError?.status !== 429 || !authError.data) return null;
   return {
@@ -96,7 +98,9 @@ export function isPreconditionRequiredError(error: unknown): boolean {
  * 从 412 错误中提取前置条件
  * 后端返回格式: { required: { "captcha": { identifier, strategy } } }
  */
-export function getPreconditionRequired(error: unknown): Record<string, { identifier?: string; strategy?: string[] }> | null {
+export function getPreconditionRequired(
+  error: unknown
+): Record<string, { identifier?: string; strategy?: string[] }> | null {
   const authError = error as AuthError;
   if (authError?.status !== 412 || !authError.data) return null;
   return authError.data.required || null;

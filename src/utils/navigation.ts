@@ -21,14 +21,14 @@ const INTERNAL_PATHS = [
 export function isInternalPath(url: string): boolean {
   try {
     const parsed = new URL(url, window.location.origin);
-    
+
     // 跨域直接返回 false
     if (parsed.origin !== window.location.origin) {
       return false;
     }
-    
+
     const pathname = parsed.pathname;
-    
+
     // 精确匹配或前缀匹配（处理带参数的路径如 /login?xxx）
     return INTERNAL_PATHS.some(
       (path) => pathname === path || pathname.startsWith(path + '/')
@@ -56,7 +56,7 @@ export function extractPathWithParams(url: string): string {
 
 /**
  * 智能导航：内部路径使用 SPA 路由，外部路径使用整页跳转
- * 
+ *
  * @param url - 目标 URL（可以是完整 URL 或相对路径）
  * @param navigate - React Router 的 navigate 函数
  * @param options - 可选配置
@@ -72,7 +72,7 @@ export function smartNavigate(
   }
 ): void {
   const { forceReload = false, replace = false } = options ?? {};
-  
+
   // 强制刷新或外部路径：使用 window.location
   if (forceReload || !isInternalPath(url)) {
     if (replace) {
@@ -82,7 +82,7 @@ export function smartNavigate(
     }
     return;
   }
-  
+
   // 内部路径：使用 SPA 路由
   const path = extractPathWithParams(url);
   navigate(path, { replace });

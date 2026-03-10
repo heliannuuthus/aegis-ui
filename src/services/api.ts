@@ -65,7 +65,10 @@ api.interceptors.response.use(
     const data = error.response?.data;
     const authError: AuthError = {
       status,
-      data: typeof data === 'object' && data !== null ? (data as Record<string, unknown>) : undefined,
+      data:
+        typeof data === 'object' && data !== null
+          ? (data as Record<string, unknown>)
+          : undefined,
     };
     return Promise.reject(authError);
   }
@@ -94,8 +97,13 @@ export const getConnections = async (): Promise<ConnectionsMap> => {
  * 200 → LoginResponse（辅助验证完成等）
  * 4xx → 抛出 AuthError
  */
-export const login = async (data: LoginRequest): Promise<LoginResponse | RedirectAction> => {
-  const response = await api.post<LoginResponse | RedirectAction>('/login', data);
+export const login = async (
+  data: LoginRequest
+): Promise<LoginResponse | RedirectAction> => {
+  const response = await api.post<LoginResponse | RedirectAction>(
+    '/login',
+    data
+  );
   return response.data;
 };
 
@@ -149,7 +157,9 @@ export const getProfile = async (): Promise<UserProfile> => {
 /**
  * 更新用户资料
  */
-export const updateProfile = async (data: UpdateProfileRequest): Promise<UserProfile> => {
+export const updateProfile = async (
+  data: UpdateProfileRequest
+): Promise<UserProfile> => {
   const response = await api.put<UserProfile>('/user/profile', data);
   return response.data;
 };
@@ -167,7 +177,9 @@ export const getMFAStatus = async (): Promise<MFAStatusResponse> => {
  */
 export const setupMFA = async (
   data: SetupMFARequest
-): Promise<SetupTOTPResponse | SetupWebAuthnBeginResponse | SetupWebAuthnFinishResponse> => {
+): Promise<
+  SetupTOTPResponse | SetupWebAuthnBeginResponse | SetupWebAuthnFinishResponse
+> => {
   const response = await api.post('/user/mfa', data);
   return response.data;
 };
@@ -185,7 +197,9 @@ export const verifyMFA = async (
 /**
  * 更新 MFA 状态（启用/禁用）
  */
-export const updateMFA = async (data: UpdateMFARequest): Promise<{ success: boolean }> => {
+export const updateMFA = async (
+  data: UpdateMFARequest
+): Promise<{ success: boolean }> => {
   const response = await api.patch('/user/mfa', data);
   return response.data;
 };
@@ -193,7 +207,9 @@ export const updateMFA = async (data: UpdateMFARequest): Promise<{ success: bool
 /**
  * 删除 MFA
  */
-export const deleteMFA = async (data: DeleteMFARequest): Promise<{ success: boolean }> => {
+export const deleteMFA = async (
+  data: DeleteMFARequest
+): Promise<{ success: boolean }> => {
   const response = await api.delete('/user/mfa', { data });
   return response.data;
 };
@@ -209,7 +225,9 @@ export const getIdentities = async (): Promise<{ identities: Identity[] }> => {
 /**
  * 解绑第三方身份
  */
-export const unbindIdentity = async (idp: string): Promise<{ success: boolean }> => {
+export const unbindIdentity = async (
+  idp: string
+): Promise<{ success: boolean }> => {
   const response = await api.delete(`/user/identities/${idp}`);
   return response.data;
 };

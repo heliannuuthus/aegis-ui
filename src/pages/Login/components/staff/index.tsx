@@ -56,7 +56,9 @@ const StaffLogin = ({
   const [step, setStep] = useState<LoginStep>('email');
   const [email, setEmail] = useState('');
   // 动画方向：forward = 向前（邮箱→验证），back = 返回
-  const [animDirection, setAnimDirection] = useState<'forward' | 'back'>('forward');
+  const [animDirection, setAnimDirection] = useState<'forward' | 'back'>(
+    'forward'
+  );
   // 用于触发重新渲染动画的 key
   const [stepKey, setStepKey] = useState(0);
 
@@ -75,10 +77,12 @@ const StaffLogin = ({
   const hasPassword = (connection.strategy ?? []).includes('password');
   const hasEmailOTP = availableDelegate.includes('email_otp');
   // WebAuthn delegate（delegate 中的 webauthn），作为可替代主认证的独立路径
-  const hasDelegateWebAuthn = availableDelegate.includes('webauthn') && webAuthnSupported;
+  const hasDelegateWebAuthn =
+    availableDelegate.includes('webauthn') && webAuthnSupported;
 
   // 是否需要 Captcha
-  const requiresCaptcha = (connection.require ?? []).includes('captcha') && !!captchaConfig;
+  const requiresCaptcha =
+    (connection.require ?? []).includes('captcha') && !!captchaConfig;
 
   // 可用的验证方式列表
   const availableMethods = useMemo(() => {
@@ -90,13 +94,16 @@ const StaffLogin = ({
   }, [hasPassword, hasEmailOTP, hasDelegateWebAuthn]);
 
   // 邮箱提交 → 前进到验证步骤
-  const handleEmailSubmit = useCallback((submittedEmail: string) => {
-    setEmail(submittedEmail);
-    setAnimDirection('forward');
-    setStepKey((k) => k + 1);
-    setStep('verify');
-    onStepChange?.('verify');
-  }, [onStepChange]);
+  const handleEmailSubmit = useCallback(
+    (submittedEmail: string) => {
+      setEmail(submittedEmail);
+      setAnimDirection('forward');
+      setStepKey((k) => k + 1);
+      setStep('verify');
+      onStepChange?.('verify');
+    },
+    [onStepChange]
+  );
 
   // 返回邮箱步骤（保留已输入的邮箱）
   const handleBack = useCallback(() => {
@@ -118,35 +125,38 @@ const StaffLogin = ({
 
   const globalLoading = loading;
 
-  const stepClassName = animDirection === 'forward' ? styles.stepContainer : styles.stepContainerBack;
+  const stepClassName =
+    animDirection === 'forward'
+      ? styles.stepContainer
+      : styles.stepContainerBack;
 
   return (
     <div className={styles.container}>
       <div key={stepKey} className={stepClassName}>
-      {step === 'email' ? (
-        <EmailStep
-          loading={globalLoading}
-          disabled={disabled || globalLoading}
-          initialEmail={email}
-          onSubmit={handleEmailSubmit}
-        />
-      ) : (
-        <VerifyStep
-          email={email}
-          availableMethods={availableMethods}
-          hasWebAuthn={hasDelegateWebAuthn}
-          authContext={authContext}
-          requiresCaptcha={requiresCaptcha}
-          captchaConfig={captchaConfig}
-          pendingActions={pendingActions}
-          loading={globalLoading}
-          onBack={handleBack}
-          onLoginSuccess={onLogin}
-          onRedirectAction={onRedirectAction}
-          onChallenge={onChallenge}
-          onError={handleError}
-        />
-      )}
+        {step === 'email' ? (
+          <EmailStep
+            loading={globalLoading}
+            disabled={disabled || globalLoading}
+            initialEmail={email}
+            onSubmit={handleEmailSubmit}
+          />
+        ) : (
+          <VerifyStep
+            email={email}
+            availableMethods={availableMethods}
+            hasWebAuthn={hasDelegateWebAuthn}
+            authContext={authContext}
+            requiresCaptcha={requiresCaptcha}
+            captchaConfig={captchaConfig}
+            pendingActions={pendingActions}
+            loading={globalLoading}
+            onBack={handleBack}
+            onLoginSuccess={onLogin}
+            onRedirectAction={onRedirectAction}
+            onChallenge={onChallenge}
+            onError={handleError}
+          />
+        )}
       </div>
     </div>
   );

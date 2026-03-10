@@ -23,9 +23,12 @@ const CaptchaStep = ({
   const [hasError, setHasError] = useState(false);
   const turnstileRef = useRef<TurnstileInstance>(null);
 
-  const handleSuccess = useCallback((token: string) => {
-    onSuccess(token);
-  }, [onSuccess]);
+  const handleSuccess = useCallback(
+    (token: string) => {
+      onSuccess(token);
+    },
+    [onSuccess]
+  );
 
   const handleWidgetLoad = useCallback(() => {
     setIsLoading(false);

@@ -45,7 +45,10 @@ const ChallengeVerify = ({
 
   const challengeIdRef = useRef(challenge.challenge_id);
   const retryAfterRef = useRef(retryAfter);
-  if (challenge.challenge_id !== challengeIdRef.current || retryAfter !== retryAfterRef.current) {
+  if (
+    challenge.challenge_id !== challengeIdRef.current ||
+    retryAfter !== retryAfterRef.current
+  ) {
     challengeIdRef.current = challenge.challenge_id;
     retryAfterRef.current = retryAfter;
     setResendTargetDate(Date.now() + retryAfter * 1000);
@@ -55,7 +58,9 @@ const ChallengeVerify = ({
   const resendSeconds = Math.round(resendCountdown / 1000);
   const canResend = resendSeconds <= 0;
 
-  const isExpired = challenge.expires_at ? Date.now() > challenge.expires_at : false;
+  const isExpired = challenge.expires_at
+    ? Date.now() > challenge.expires_at
+    : false;
   /* eslint-enable react-hooks/purity */
 
   const handleOTPChange = (value: string) => {
@@ -71,29 +76,37 @@ const ChallengeVerify = ({
     }
   };
 
-  const maskedEmail = challenge.principal ? maskEmail(challenge.principal) : null;
+  const maskedEmail = challenge.principal
+    ? maskEmail(challenge.principal)
+    : null;
 
-  const backButtonStyle = useMemo<React.CSSProperties>(() => ({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 4,
-    padding: 0,
-    fontSize: 14,
-    color: '#6b7280',
-    background: 'transparent',
-    border: 'none',
-    boxShadow: 'none',
-    height: 'auto',
-  }), []);
+  const backButtonStyle = useMemo<React.CSSProperties>(
+    () => ({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 4,
+      padding: 0,
+      fontSize: 14,
+      color: '#6b7280',
+      background: 'transparent',
+      border: 'none',
+      boxShadow: 'none',
+      height: 'auto',
+    }),
+    []
+  );
 
-  const otpInputStyle = useMemo<React.CSSProperties>(() => ({
-    width: 42,
-    height: 48,
-    fontSize: 20,
-    fontWeight: 600,
-    textAlign: 'center',
-    borderRadius: 8,
-  }), []);
+  const otpInputStyle = useMemo<React.CSSProperties>(
+    () => ({
+      width: 42,
+      height: 48,
+      fontSize: 20,
+      fontWeight: 600,
+      textAlign: 'center',
+      borderRadius: 8,
+    }),
+    []
+  );
 
   if (isExpired) {
     return (
@@ -110,8 +123,17 @@ const ChallengeVerify = ({
         </div>
         <div className={styles.expiredState}>
           <div className={styles.expiredIcon}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
           </div>
           <p className={styles.expiredText}>验证码已过期</p>

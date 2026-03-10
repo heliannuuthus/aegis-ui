@@ -2,7 +2,11 @@ import { useEffect, useRef } from 'react';
 import { Card, Spin } from 'antd';
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { login, isRedirectAction } from '@/services/api';
-import { isFlowExpiredError, restartAuthFlow, getErrorMessage } from '@/utils/error';
+import {
+  isFlowExpiredError,
+  restartAuthFlow,
+  getErrorMessage,
+} from '@/utils/error';
 import { smartNavigate } from '@/utils/navigation';
 import type { AuthError } from '@/types';
 import styles from './index.module.scss';
@@ -85,7 +89,7 @@ function CallbackPage() {
     };
 
     handleCallback();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

@@ -28,8 +28,11 @@ export interface PasskeyUserHint {
  * 暂存的用户信息（用于注册 Passkey 后写入缓存）
  * 在个人信息页设置，注册成功后使用
  */
-let pendingUserInfo: { uid: string; nickname: string; picture?: string } | null =
-  null;
+let pendingUserInfo: {
+  uid: string;
+  nickname: string;
+  picture?: string;
+} | null = null;
 
 export const passkeyUserCache = {
   /**
@@ -75,7 +78,11 @@ export const passkeyUserCache = {
    * 暂存当前用户信息（个人信息页调用）
    * 在用户注册 Passkey 之前调用，注册成功后自动写入缓存
    */
-  setPendingUserInfo(info: { uid: string; nickname: string; picture?: string }): void {
+  setPendingUserInfo(info: {
+    uid: string;
+    nickname: string;
+    picture?: string;
+  }): void {
     pendingUserInfo = info;
   },
 

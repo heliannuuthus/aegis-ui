@@ -13,31 +13,32 @@ const themeConfig = {
     colorPrimary: '#0066ff',
     colorPrimaryHover: '#0052cc',
     colorPrimaryActive: '#0047b3',
-    
+
     // 圆角
     borderRadius: 8,
     borderRadiusLG: 10,
     borderRadiusSM: 6,
-    
+
     // 字体
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
-    
+    fontFamily:
+      "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+
     // 颜色
     colorSuccess: '#10b981',
     colorWarning: '#f59e0b',
     colorError: '#ef4444',
     colorInfo: '#3b82f6',
-    
+
     // 文本颜色
     colorText: '#1f2937',
     colorTextSecondary: '#4b5563',
     colorTextTertiary: '#9ca3af',
     colorTextDisabled: '#d1d5db',
-    
+
     // 边框颜色
     colorBorder: '#e5e7eb',
     colorBorderSecondary: '#f3f4f6',
-    
+
     // 背景色
     colorBgContainer: '#ffffff',
     colorBgLayout: '#f9fafb',

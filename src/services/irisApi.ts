@@ -53,8 +53,13 @@ async function request<T>(
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({})) as Record<string, unknown>;
-    const desc = (errorData.error_description ?? errorData.error ?? `请求失败: ${response.status}`) as string;
+    const errorData = (await response.json().catch(() => ({}))) as Record<
+      string,
+      unknown
+    >;
+    const desc = (errorData.error_description ??
+      errorData.error ??
+      `请求失败: ${response.status}`) as string;
     const err = Object.assign(new Error(desc), {
       status: response.status,
       data: errorData,
@@ -87,7 +92,9 @@ export async function getMFAStatus(auth: WebAuth): Promise<MFAStatusResponse> {
 export async function setupMFA(
   auth: WebAuth,
   data: SetupMFARequest
-): Promise<SetupTOTPResponse | SetupWebAuthnBeginResponse | SetupWebAuthnFinishResponse> {
+): Promise<
+  SetupTOTPResponse | SetupWebAuthnBeginResponse | SetupWebAuthnFinishResponse
+> {
   return request(auth, 'POST', '/mfa', data);
 }
 

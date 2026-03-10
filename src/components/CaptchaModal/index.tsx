@@ -22,15 +22,18 @@ const CaptchaModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const turnstileRef = useRef<TurnstileInstance>(null);
 
-  const handleSuccess = useCallback(async (token: string) => {
-    setIsSubmitting(true);
-    try {
-      await onSuccess(challengeId, token);
-    } catch {
-      turnstileRef.current?.reset();
-      setIsSubmitting(false);
-    }
-  }, [challengeId, onSuccess]);
+  const handleSuccess = useCallback(
+    async (token: string) => {
+      setIsSubmitting(true);
+      try {
+        await onSuccess(challengeId, token);
+      } catch {
+        turnstileRef.current?.reset();
+        setIsSubmitting(false);
+      }
+    },
+    [challengeId, onSuccess]
+  );
 
   const handleWidgetLoad = useCallback(() => {
     setIsLoading(false);
@@ -60,14 +63,14 @@ const CaptchaModal = ({
     >
       <div className={styles.content}>
         <p className={styles.hint}>请完成人机验证以继续</p>
-        
+
         <div className={styles.turnstileWrapper}>
           {isLoading && (
             <div className={styles.loading}>
               <Spin />
             </div>
           )}
-          
+
           {open && siteKey && (
             <Turnstile
               ref={turnstileRef}
