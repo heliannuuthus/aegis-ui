@@ -96,7 +96,6 @@ const LoginPage = () => {
       }
     };
     fetchData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 预加载 Turnstile 脚本，减少 captcha 弹出时的延迟

@@ -89,11 +89,6 @@ const StaffLogin = ({
     return methods;
   }, [hasPassword, hasEmailOTP, hasDelegateWebAuthn]);
 
-  // 如果没有任何可用的登录方式，不渲染
-  if (!hasPassword && !hasEmailOTP && !hasDelegateWebAuthn) {
-    return null;
-  }
-
   // 邮箱提交 → 前进到验证步骤
   const handleEmailSubmit = useCallback((submittedEmail: string) => {
     setEmail(submittedEmail);
@@ -115,6 +110,11 @@ const StaffLogin = ({
   const handleError = useCallback((error: Error) => {
     message.error(error.message || '操作失败');
   }, []);
+
+  // 如果没有任何可用的登录方式，不渲染
+  if (!hasPassword && !hasEmailOTP && !hasDelegateWebAuthn) {
+    return null;
+  }
 
   const globalLoading = loading;
 

@@ -180,6 +180,7 @@ const IDPButton = ({
     if (isOAuth && identifier) {
       const authURL = buildOAuthURL(connName, identifier);
       if (authURL) {
+        // eslint-disable-next-line react-hooks/immutability
         window.location.href = authURL;
         return;
       }

@@ -100,7 +100,6 @@ function ConsentPage() {
       }
     };
     fetchConsentInfo();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 处理授权

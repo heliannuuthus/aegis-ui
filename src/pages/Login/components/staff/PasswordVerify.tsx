@@ -40,7 +40,7 @@ const PasswordVerify = ({
   const [form] = Form.useForm();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [_captchaVerified, setCaptchaVerified] = useState(false);
   const [dynamicRequireCaptcha, setDynamicRequireCaptcha] = useState(false);
   const lastPendingSeqRef = useRef(0);
 

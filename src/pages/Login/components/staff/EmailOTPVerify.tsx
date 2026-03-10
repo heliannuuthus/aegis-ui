@@ -159,6 +159,52 @@ const EmailOTPVerify = ({
     }
   }, [captchaConfig, email]);
 
+  const handleResend = useCallback(async () => {
+    if (!authContext?.application?.app_id || !authContext?.service?.service_id) return;
+
+    setIsLoading(true);
+    try {
+      const challengeResponse = await initiateChallenge({
+        client_id: authContext.application.app_id,
+        audience: CHALLENGE_AUDIENCE,
+        type: 'staff:verify',
+        channel_type: 'email_otp',
+        channel: email,
+      });
+
+      const captcha = challengeResponse.required?.captcha;
+      if (captcha?.identifier) {
+        setCaptchaConfig({
+          siteKey: captcha.identifier,
+          strategy: captcha.strategy?.[0] ?? 'turnstile',
+          challengeId: challengeResponse.challenge_id,
+        });
+        setViewState('captcha');
+      } else {
+        setEmailOTPChallenge({
+          challenge_id: challengeResponse.challenge_id,
+          type: 'email_otp',
+          hint: `验证码已发送到 ${email}`,
+          retry_after: challengeResponse.retry_after ?? DEFAULT_RETRY_AFTER,
+          connection: 'staff',
+          principal: email,
+        });
+        message.success('验证码已重新发送');
+      }
+    } catch (error) {
+      if (isRateLimitError(error)) {
+        const info = getRateLimitData(error);
+        const retryAfter = info?.retryAfter ?? DEFAULT_RETRY_AFTER;
+        message.warning(`请求过于频繁，请 ${retryAfter} 秒后重试`);
+        setEmailOTPChallenge(prev => prev ? { ...prev, retry_after: retryAfter } : prev);
+      } else {
+        showError(error);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [email, authContext]);
+
   const handleCodeVerify = useCallback(async (code: string) => {
     if (!emailOTPChallenge) return;
 
@@ -241,53 +287,7 @@ const EmailOTPVerify = ({
     } finally {
       setIsLoading(false);
     }
-  }, [emailOTPChallenge, email, onLoginSuccess, onRedirectAction, onChallenge]);
-
-  const handleResend = useCallback(async () => {
-    if (!authContext?.application?.app_id || !authContext?.service?.service_id) return;
-
-    setIsLoading(true);
-    try {
-      const challengeResponse = await initiateChallenge({
-        client_id: authContext.application.app_id,
-        audience: CHALLENGE_AUDIENCE,
-        type: 'staff:verify',
-        channel_type: 'email_otp',
-        channel: email,
-      });
-
-      const captcha = challengeResponse.required?.captcha;
-      if (captcha?.identifier) {
-        setCaptchaConfig({
-          siteKey: captcha.identifier,
-          strategy: captcha.strategy?.[0] ?? 'turnstile',
-          challengeId: challengeResponse.challenge_id,
-        });
-        setViewState('captcha');
-      } else {
-        setEmailOTPChallenge({
-          challenge_id: challengeResponse.challenge_id,
-          type: 'email_otp',
-          hint: `验证码已发送到 ${email}`,
-          retry_after: challengeResponse.retry_after ?? DEFAULT_RETRY_AFTER,
-          connection: 'staff',
-          principal: email,
-        });
-        message.success('验证码已重新发送');
-      }
-    } catch (error) {
-      if (isRateLimitError(error)) {
-        const info = getRateLimitData(error);
-        const retryAfter = info?.retryAfter ?? DEFAULT_RETRY_AFTER;
-        message.warning(`请求过于频繁，请 ${retryAfter} 秒后重试`);
-        setEmailOTPChallenge(prev => prev ? { ...prev, retry_after: retryAfter } : prev);
-      } else {
-        showError(error);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [email, authContext]);
+  }, [emailOTPChallenge, email, onLoginSuccess, onRedirectAction, onChallenge, handleResend]);
 
   if (viewState === 'init') {
     return null;

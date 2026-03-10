@@ -5,7 +5,7 @@
  * 通过 aegis-sdk 的 WebAuth 实例管理 OAuth2 Bearer Token 认证。
  */
 
-import { createContext, useContext, useEffect, useState, useRef } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { WebAuth } from '@heliannuuthus/aegis-sdk/web';
 import {
@@ -48,22 +48,20 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const authRef = useRef(getWebAuth());
+  const [auth] = useState(() => getWebAuth());
   const [ready, setReady] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
-      const auth = authRef.current;
       const isAuth = await auth.isAuthenticated();
       setAuthenticated(isAuth);
       setReady(true);
     };
     checkAuth();
-  }, []);
+  }, [auth]);
 
   const login = async () => {
-    const auth = authRef.current;
     await auth.authorize({
       audience: IRIS_AUTH_CONFIG.audience,
       scopes: [...IRIS_AUTH_CONFIG.defaultScopes],
@@ -71,7 +69,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const logout = async () => {
-    const auth = authRef.current;
     await auth.logout({ returnTo: getAegisEndpoint() });
     setAuthenticated(false);
   };
@@ -79,7 +76,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   return (
     <AuthContext.Provider
       value={{
-        auth: authRef.current,
+        auth,
         ready,
         authenticated,
         login,

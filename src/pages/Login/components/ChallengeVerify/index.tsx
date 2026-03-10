@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Button, Input } from 'antd';
 import { ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useCountDown } from 'ahooks';
@@ -35,24 +35,28 @@ const ChallengeVerify = ({
 }: ChallengeVerifyProps) => {
   const [code, setCode] = useState<string>('');
   const retryAfter = challenge.retry_after ?? RESEND_COOLDOWN;
-  const [resendTargetDate, setResendTargetDate] = useState<number>(
-    Date.now() + retryAfter * 1000
+
+  /* eslint-disable react-hooks/purity -- Date.now() is inherently impure but necessary for countdown timers */
+  const mountTimeRef = useRef(Date.now());
+
+  const [resendTargetDate, setResendTargetDate] = useState(
+    () => mountTimeRef.current + retryAfter * 1000
   );
 
-  const prevChallengeRef = useRef({ id: challenge.challenge_id, retryAfter });
-  useEffect(() => {
-    const prev = prevChallengeRef.current;
-    if (challenge.challenge_id !== prev.id || retryAfter !== prev.retryAfter) {
-      prevChallengeRef.current = { id: challenge.challenge_id, retryAfter };
-      setResendTargetDate(Date.now() + retryAfter * 1000);
-    }
-  }, [challenge.challenge_id, retryAfter]);
+  const challengeIdRef = useRef(challenge.challenge_id);
+  const retryAfterRef = useRef(retryAfter);
+  if (challenge.challenge_id !== challengeIdRef.current || retryAfter !== retryAfterRef.current) {
+    challengeIdRef.current = challenge.challenge_id;
+    retryAfterRef.current = retryAfter;
+    setResendTargetDate(Date.now() + retryAfter * 1000);
+  }
 
   const [resendCountdown] = useCountDown({ targetDate: resendTargetDate });
   const resendSeconds = Math.round(resendCountdown / 1000);
   const canResend = resendSeconds <= 0;
 
   const isExpired = challenge.expires_at ? Date.now() > challenge.expires_at : false;
+  /* eslint-enable react-hooks/purity */
 
   const handleOTPChange = (value: string) => {
     setCode(value);
@@ -64,7 +68,6 @@ const ChallengeVerify = ({
   const handleResend = () => {
     if (onResend && canResend) {
       onResend();
-      setResendTargetDate(Date.now() + retryAfter * 1000);
     }
   };
 

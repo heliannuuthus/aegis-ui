@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Modal, Spin } from 'antd';
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
 import styles from './index.module.scss';
@@ -21,13 +21,6 @@ const CaptchaModal = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const turnstileRef = useRef<TurnstileInstance>(null);
-
-  useEffect(() => {
-    if (open) {
-      setIsLoading(true);
-      setIsSubmitting(false);
-    }
-  }, [open]);
 
   const handleSuccess = useCallback(async (token: string) => {
     setIsSubmitting(true);
