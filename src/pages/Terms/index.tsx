@@ -26,7 +26,12 @@ const TermsPage = () => {
       <div className={styles.card}>
         {/* 头部 */}
         <header className={styles.header}>
-          <Button type="link" className={styles.backButton} icon={<ArrowLeftOutlined />} onClick={handleBack}>
+          <Button
+            type="link"
+            className={styles.backButton}
+            icon={<ArrowLeftOutlined />}
+            onClick={handleBack}
+          >
             返回
           </Button>
           <div className={styles.headerContent}>
@@ -42,23 +47,64 @@ const TermsPage = () => {
         <nav className={styles.toc}>
           <h3 className={styles.tocTitle}>目录</h3>
           <ul className={styles.tocList}>
-            <li><Button type="link" onClick={() => scrollToSection('acceptance')}>1. 服务协议的接受</Button></li>
-            <li><Button type="link" onClick={() => scrollToSection('services')}>2. 服务说明</Button></li>
-            <li><Button type="link" onClick={() => scrollToSection('account')}>3. 用户账户</Button></li>
-            <li><Button type="link" onClick={() => scrollToSection('conduct')}>4. 用户行为规范</Button></li>
-            <li><Button type="link" onClick={() => scrollToSection('ip')}>5. 知识产权</Button></li>
-            <li><Button type="link" onClick={() => scrollToSection('disclaimer')}>6. 免责声明</Button></li>
-            <li><Button type="link" onClick={() => scrollToSection('liability')}>7. 责任限制</Button></li>
-            <li><Button type="link" onClick={() => scrollToSection('changes')}>8. 条款修改</Button></li>
-            <li><Button type="link" onClick={() => scrollToSection('law')}>9. 适用法律与争议解决</Button></li>
-            <li><Button type="link" onClick={() => scrollToSection('contact')}>10. 联系我们</Button></li>
+            <li>
+              <Button type="link" onClick={() => scrollToSection('acceptance')}>
+                1. 服务协议的接受
+              </Button>
+            </li>
+            <li>
+              <Button type="link" onClick={() => scrollToSection('services')}>
+                2. 服务说明
+              </Button>
+            </li>
+            <li>
+              <Button type="link" onClick={() => scrollToSection('account')}>
+                3. 用户账户
+              </Button>
+            </li>
+            <li>
+              <Button type="link" onClick={() => scrollToSection('conduct')}>
+                4. 用户行为规范
+              </Button>
+            </li>
+            <li>
+              <Button type="link" onClick={() => scrollToSection('ip')}>
+                5. 知识产权
+              </Button>
+            </li>
+            <li>
+              <Button type="link" onClick={() => scrollToSection('disclaimer')}>
+                6. 免责声明
+              </Button>
+            </li>
+            <li>
+              <Button type="link" onClick={() => scrollToSection('liability')}>
+                7. 责任限制
+              </Button>
+            </li>
+            <li>
+              <Button type="link" onClick={() => scrollToSection('changes')}>
+                8. 条款修改
+              </Button>
+            </li>
+            <li>
+              <Button type="link" onClick={() => scrollToSection('law')}>
+                9. 适用法律与争议解决
+              </Button>
+            </li>
+            <li>
+              <Button type="link" onClick={() => scrollToSection('contact')}>
+                10. 联系我们
+              </Button>
+            </li>
           </ul>
         </nav>
 
         {/* 引言 */}
         <div className={styles.intro}>
           <p>
-            欢迎使用 Aegis 身份认证服务。在使用我们的服务之前，请仔细阅读以下条款。
+            欢迎使用 Aegis
+            身份认证服务。在使用我们的服务之前，请仔细阅读以下条款。
             这些条款构成您与 Aegis 之间具有法律约束力的协议。
           </p>
         </div>
@@ -71,11 +117,13 @@ const TermsPage = () => {
               服务协议的接受
             </h2>
             <p>
-              本服务条款（以下简称"本条款"）是您与 Aegis 之间关于使用 Aegis 身份认证服务（以下简称"本服务"）所订立的协议。
+              本服务条款（以下简称"本条款"）是您与 Aegis 之间关于使用 Aegis
+              身份认证服务（以下简称"本服务"）所订立的协议。
             </p>
             <div className={styles.highlight}>
               <p>
-                <strong>重要提示：</strong>在您注册、登录或以其他方式使用本服务前，请您仔细阅读本条款的全部内容。
+                <strong>重要提示：</strong>
+                在您注册、登录或以其他方式使用本服务前，请您仔细阅读本条款的全部内容。
                 如您不同意本条款的任何内容，请勿使用本服务。一旦您开始使用本服务，即表示您已充分理解并同意接受本条款的全部内容。
               </p>
             </div>
@@ -90,31 +138,61 @@ const TermsPage = () => {
             <ul className={styles.featureList}>
               <li>
                 <span className={styles.featureIcon}>
-                  <svg viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                  <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
                 </span>
                 <span>用户身份验证与登录</span>
               </li>
               <li>
                 <span className={styles.featureIcon}>
-                  <svg viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                  <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
                 </span>
                 <span>单点登录（SSO）服务</span>
               </li>
               <li>
                 <span className={styles.featureIcon}>
-                  <svg viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                  <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
                 </span>
                 <span>多因素认证（MFA）</span>
               </li>
               <li>
                 <span className={styles.featureIcon}>
-                  <svg viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                  <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
                 </span>
                 <span>第三方身份提供商集成</span>
               </li>
               <li>
                 <span className={styles.featureIcon}>
-                  <svg viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                  <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
                 </span>
                 <span>访问控制与授权管理</span>
               </li>
@@ -129,7 +207,7 @@ const TermsPage = () => {
               <span className={styles.sectionNumber}>3</span>
               用户账户
             </h2>
-            
+
             <h3>3.1 账户注册</h3>
             <p>
               您在注册账户时，应提供真实、准确、完整的个人信息。如果您提供的信息不准确或不完整，
@@ -248,7 +326,10 @@ const TermsPage = () => {
                 </span>
                 <div className={styles.contactInfo}>
                   <span className={styles.contactLabel}>电子邮件</span>
-                  <a href="mailto:aegis@heliannuuthus.com" className={styles.contactValue}>
+                  <a
+                    href="mailto:aegis@heliannuuthus.com"
+                    className={styles.contactValue}
+                  >
                     aegis@heliannuuthus.com
                   </a>
                 </div>

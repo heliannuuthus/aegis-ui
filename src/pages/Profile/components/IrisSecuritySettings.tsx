@@ -19,7 +19,10 @@ import {
   verifyMFA,
   deleteMFA,
 } from '@/services/irisApi';
-import { convertAttestationResponse, convertToPublicKeyCreationOptions } from '@/pages/Login/components/WebAuthn';
+import {
+  convertAttestationResponse,
+  convertToPublicKeyCreationOptions,
+} from '@/pages/Login/components/WebAuthn';
 import { passkeyUserCache } from '@/utils/passkeyCache';
 import { showError } from '@/utils/error';
 import type {
@@ -44,7 +47,7 @@ const IrisSecuritySettings = () => {
 
   useEffect(() => {
     loadMFAStatus();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadMFAStatus = async () => {
@@ -99,7 +102,8 @@ const IrisSecuritySettings = () => {
   const handleDeleteTOTP = async () => {
     Modal.confirm({
       title: '确认删除',
-      content: '删除 TOTP 后，您将无法使用验证器应用进行二次验证。确定要删除吗？',
+      content:
+        '删除 TOTP 后，您将无法使用验证器应用进行二次验证。确定要删除吗？',
       okText: '确认删除',
       okType: 'danger',
       cancelText: '取消',
@@ -118,16 +122,24 @@ const IrisSecuritySettings = () => {
   const handleSetupWebAuthn = async () => {
     try {
       setWebauthnLoading(true);
-      const beginResponse = await setupMFA(auth, { type: 'webauthn', action: 'begin' });
+      const beginResponse = await setupMFA(auth, {
+        type: 'webauthn',
+        action: 'begin',
+      });
       if (beginResponse.type !== 'webauthn' || !('options' in beginResponse)) {
         throw new Error('Invalid response');
       }
-      const { options, challenge_id } = beginResponse as SetupWebAuthnBeginResponse;
+      const { options, challenge_id } =
+        beginResponse as SetupWebAuthnBeginResponse;
       const publicKeyOptions = convertToPublicKeyCreationOptions(options);
-      const credential = await navigator.credentials.create({ publicKey: publicKeyOptions });
+      const credential = await navigator.credentials.create({
+        publicKey: publicKeyOptions,
+      });
       if (!credential) throw new Error('WebAuthn 注册被取消');
 
-      const attestationResponse = convertAttestationResponse(credential as PublicKeyCredential);
+      const attestationResponse = convertAttestationResponse(
+        credential as PublicKeyCredential
+      );
       const finishResponse = await setupMFA(auth, {
         type: 'webauthn',
         action: 'finish',
@@ -159,9 +171,14 @@ const IrisSecuritySettings = () => {
       cancelText: '取消',
       onOk: async () => {
         try {
-          await deleteMFA(auth, { type: 'webauthn', credential_id: credentialId });
+          await deleteMFA(auth, {
+            type: 'webauthn',
+            credential_id: credentialId,
+          });
           message.success('安全密钥已删除');
-          const remaining = webauthnCredentials?.filter((c) => c.credential_id !== credentialId);
+          const remaining = webauthnCredentials?.filter(
+            (c) => c.credential_id !== credentialId
+          );
           if (!remaining || remaining.length === 0) {
             passkeyUserCache.clear();
           }
@@ -219,13 +236,15 @@ const IrisSecuritySettings = () => {
             </p>
             {totpCredential.last_used_at && (
               <p className={styles.lastUsed}>
-                最后使用: {new Date(totpCredential.last_used_at).toLocaleString()}
+                最后使用:{' '}
+                {new Date(totpCredential.last_used_at).toLocaleString()}
               </p>
             )}
           </div>
         ) : (
           <p className={styles.description}>
-            使用 Google Authenticator、Microsoft Authenticator 等验证器应用生成一次性验证码
+            使用 Google Authenticator、Microsoft Authenticator
+            等验证器应用生成一次性验证码
           </p>
         )}
       </Card>
@@ -278,7 +297,10 @@ const IrisSecuritySettings = () => {
             ))}
           </div>
         ) : (
-          <Empty description="暂无安全密钥" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          <Empty
+            description="暂无安全密钥"
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+          />
         )}
       </Card>
 
@@ -307,7 +329,9 @@ const IrisSecuritySettings = () => {
             <Input
               placeholder="000000"
               value={totpCode}
-              onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onChange={(e) =>
+                setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))
+              }
               maxLength={6}
               className={styles.codeInput}
             />

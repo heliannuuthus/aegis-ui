@@ -28,10 +28,24 @@ $primary-lightest: $primary-50;
 $gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
 $gradient-primary-hover: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
 $gradient-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-$gradient-bg-subtle: linear-gradient(160deg, #0d1b2a 0%, #1b263b 50%, #415a77 100%);
+$gradient-bg-subtle: linear-gradient(
+  160deg,
+  #0d1b2a 0%,
+  #1b263b 50%,
+  #415a77 100%
+);
 $gradient-subtle: linear-gradient(135deg, #eef2ff 0%, #f3e8ff 100%);
-$gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-$gradient-shimmer: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+$gradient-glass: linear-gradient(
+  135deg,
+  rgba(255, 255, 255, 0.1) 0%,
+  rgba(255, 255, 255, 0.05) 100%
+);
+$gradient-shimmer: linear-gradient(
+  90deg,
+  transparent,
+  rgba(255, 255, 255, 0.3),
+  transparent
+);
 
 // ========================================
 // 语义色彩
@@ -89,10 +103,18 @@ $bg-overlay: rgba(0, 0, 0, 0.5);
 // ========================================
 
 $shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-$shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
-$shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-$shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-$shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+$shadow-sm:
+  0 1px 3px 0 rgba(0, 0, 0, 0.1),
+  0 1px 2px -1px rgba(0, 0, 0, 0.1);
+$shadow-md:
+  0 4px 6px -1px rgba(0, 0, 0, 0.1),
+  0 2px 4px -2px rgba(0, 0, 0, 0.1);
+$shadow-lg:
+  0 10px 15px -3px rgba(0, 0, 0, 0.1),
+  0 4px 6px -4px rgba(0, 0, 0, 0.1);
+$shadow-xl:
+  0 20px 25px -5px rgba(0, 0, 0, 0.1),
+  0 8px 10px -6px rgba(0, 0, 0, 0.1);
 $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
 // 彩色阴影
@@ -173,7 +195,10 @@ $ease-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);
 
 // 预设动画
 $transition-all: all $duration-normal $ease-in-out;
-$transition-colors: color $duration-fast $ease-in-out, background-color $duration-fast $ease-in-out, border-color $duration-fast $ease-in-out;
+$transition-colors:
+  color $duration-fast $ease-in-out,
+  background-color $duration-fast $ease-in-out,
+  border-color $duration-fast $ease-in-out;
 $transition-transform: transform $duration-normal $ease-out;
 $transition-opacity: opacity $duration-normal $ease-in-out;
 $transition-shadow: box-shadow $duration-normal $ease-in-out;
@@ -193,8 +218,11 @@ $breakpoint-2xl: 1536px;
 // 排版系统
 // ========================================
 
-$font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
-$font-mono: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', 'Liberation Mono', monospace;
+$font-sans:
+  -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+  Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+$font-mono:
+  'SF Mono', 'Monaco', 'Menlo', 'Consolas', 'Liberation Mono', monospace;
 
 // 字号
 $text-xs: 12px;

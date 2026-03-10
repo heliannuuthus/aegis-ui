@@ -5,7 +5,7 @@
  * nginx 会将 iris.heliannuuthus.com/api/* 映射到后端 /user/*。
  */
 
-import type { WebAuth } from '@aegis/sdk/web';
+import type { WebAuth } from '@heliannuuthus/aegis-sdk/web';
 import { IRIS_AUTH_CONFIG, getIrisApiBase } from '@/config/env';
 import type {
   UserProfile,
@@ -53,8 +53,13 @@ async function request<T>(
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({})) as Record<string, unknown>;
-    const desc = (errorData.error_description ?? errorData.error ?? `请求失败: ${response.status}`) as string;
+    const errorData = (await response.json().catch(() => ({}))) as Record<
+      string,
+      unknown
+    >;
+    const desc = (errorData.error_description ??
+      errorData.error ??
+      `请求失败: ${response.status}`) as string;
     const err = Object.assign(new Error(desc), {
       status: response.status,
       data: errorData,
@@ -87,7 +92,9 @@ export async function getMFAStatus(auth: WebAuth): Promise<MFAStatusResponse> {
 export async function setupMFA(
   auth: WebAuth,
   data: SetupMFARequest
-): Promise<SetupTOTPResponse | SetupWebAuthnBeginResponse | SetupWebAuthnFinishResponse> {
+): Promise<
+  SetupTOTPResponse | SetupWebAuthnBeginResponse | SetupWebAuthnFinishResponse
+> {
   return request(auth, 'POST', '/mfa', data);
 }
 

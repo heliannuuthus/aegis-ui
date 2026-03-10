@@ -32,26 +32,32 @@ const AuthCallbackPage = () => {
         return;
       }
 
-      const redirectTo = result.redirectTo ?? IRIS_AUTH_CONFIG.defaultRedirectPath;
+      const redirectTo =
+        result.redirectTo ?? IRIS_AUTH_CONFIG.defaultRedirectPath;
       navigate(redirectTo, { replace: true });
     };
 
     handleCallback();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (error) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+        }}
+      >
         <Card style={{ maxWidth: 480 }}>
           <Result
             status="error"
             title="登录失败"
             subTitle={error}
             extra={
-              <a href={IRIS_AUTH_CONFIG.defaultRedirectPath}>
-                返回用户中心
-              </a>
+              <a href={IRIS_AUTH_CONFIG.defaultRedirectPath}>返回用户中心</a>
             }
           />
         </Card>
@@ -60,7 +66,14 @@ const AuthCallbackPage = () => {
   }
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+      }}
+    >
       <Card style={{ padding: '48px 32px', textAlign: 'center' }}>
         <Spin size="large" />
         <p style={{ marginTop: 16, color: '#666' }}>正在完成登录...</p>

@@ -1,6 +1,11 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
 import { Form, Input, Button, message } from 'antd';
-import { ArrowLeftOutlined, LockOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
+import {
+  ArrowLeftOutlined,
+  LockOutlined,
+  EyeOutlined,
+  EyeInvisibleOutlined,
+} from '@ant-design/icons';
 import type {
   ChallengeResponse,
   LoginResponse,
@@ -40,102 +45,126 @@ const PasswordVerify = ({
   const [form] = Form.useForm();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [_captchaVerified, setCaptchaVerified] = useState(false);
   const [dynamicRequireCaptcha, setDynamicRequireCaptcha] = useState(false);
   const lastPendingSeqRef = useRef(0);
 
-  const needsCaptcha = (requiresCaptcha || dynamicRequireCaptcha) && !!captchaConfig;
+  const needsCaptcha =
+    (requiresCaptcha || dynamicRequireCaptcha) && !!captchaConfig;
   const initialView: ViewState = needsCaptcha ? 'captcha' : 'password';
   const [viewState, setViewState] = useState<ViewState>(initialView);
 
-  if (pendingActions.seq !== 0 && pendingActions.seq !== lastPendingSeqRef.current) {
+  if (
+    pendingActions.seq !== 0 &&
+    pendingActions.seq !== lastPendingSeqRef.current
+  ) {
     lastPendingSeqRef.current = pendingActions.seq;
-    if (pendingActions.actions.some((a) => captchaConfig && a === captchaConfig.connection)) {
+    if (
+      pendingActions.actions.some(
+        (a) => captchaConfig && a === captchaConfig.connection
+      )
+    ) {
       setDynamicRequireCaptcha(true);
       setCaptchaVerified(false);
       setViewState('captcha');
     }
   }
 
-  const performLogin = useCallback(async (password: string) => {
-    const response = await login({
-      connection: 'staff',
-      strategy: 'password',
-      principal: email,
-      proof: password,
-    });
-
-    if (isRedirectAction(response)) {
-      onRedirectAction(response);
-    } else if (response.challenge) {
-      onChallenge(response.challenge);
-    } else {
-      onLoginSuccess(response);
-    }
-  }, [email, onLoginSuccess, onRedirectAction, onChallenge]);
-
-  const handleCaptchaSuccess = useCallback(async (token: string) => {
-    try {
-      const captchaResp = await login({
-        connection: 'captcha',
-        strategy: captchaConfig?.strategy?.[0] ?? 'turnstile',
-        proof: token,
+  const performLogin = useCallback(
+    async (password: string) => {
+      const response = await login({
+        connection: 'staff',
+        strategy: 'password',
+        principal: email,
+        proof: password,
       });
 
-      if (isRedirectAction(captchaResp)) {
-        if (captchaResp.actions.length > 0) {
-          onRedirectAction(captchaResp);
-          return;
+      if (isRedirectAction(response)) {
+        onRedirectAction(response);
+      } else if (response.challenge) {
+        onChallenge(response.challenge);
+      } else {
+        onLoginSuccess(response);
+      }
+    },
+    [email, onLoginSuccess, onRedirectAction, onChallenge]
+  );
+
+  const handleCaptchaSuccess = useCallback(
+    async (token: string) => {
+      try {
+        const captchaResp = await login({
+          connection: 'captcha',
+          strategy: captchaConfig?.strategy?.[0] ?? 'turnstile',
+          proof: token,
+        });
+
+        if (isRedirectAction(captchaResp)) {
+          if (captchaResp.actions.length > 0) {
+            onRedirectAction(captchaResp);
+            return;
+          }
         }
-      }
 
-      setCaptchaVerified(true);
-      setViewState('password');
-    } catch (error) {
-      if (isRateLimitError(error)) {
-        const info = getRateLimitData(error);
-        message.warning(`请求过于频繁，请 ${info?.retryAfter || 60} 秒后重试`);
-      } else {
-        showError(error);
+        setCaptchaVerified(true);
+        setViewState('password');
+      } catch (error) {
+        if (isRateLimitError(error)) {
+          const info = getRateLimitData(error);
+          message.warning(
+            `请求过于频繁，请 ${info?.retryAfter || 60} 秒后重试`
+          );
+        } else {
+          showError(error);
+        }
+        setViewState('captcha');
       }
-      setViewState('captcha');
-    }
-  }, [captchaConfig, onRedirectAction]);
+    },
+    [captchaConfig, onRedirectAction]
+  );
 
-  const handleSubmit = useCallback(async (values: { password: string }) => {
-    setIsLoading(true);
-    try {
-      await performLogin(values.password);
-    } catch (error) {
-      if (isRateLimitError(error)) {
-        const info = getRateLimitData(error);
-        message.warning(`请求过于频繁，请 ${info?.retryAfter || 60} 秒后重试`);
-      } else {
-        onError(error instanceof Error ? error : new Error('登录失败'));
+  const handleSubmit = useCallback(
+    async (values: { password: string }) => {
+      setIsLoading(true);
+      try {
+        await performLogin(values.password);
+      } catch (error) {
+        if (isRateLimitError(error)) {
+          const info = getRateLimitData(error);
+          message.warning(
+            `请求过于频繁，请 ${info?.retryAfter || 60} 秒后重试`
+          );
+        } else {
+          onError(error instanceof Error ? error : new Error('登录失败'));
+        }
+      } finally {
+        setIsLoading(false);
       }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [performLogin, onError]);
+    },
+    [performLogin, onError]
+  );
 
-  const backButtonStyle = useMemo<React.CSSProperties>(() => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-    background: 'none',
-    border: 'none',
-    padding: 0,
-    marginBottom: 20,
-    fontSize: 14,
-    color: '#6b7280',
-    height: 'auto',
-    boxShadow: 'none',
-  }), []);
+  const backButtonStyle = useMemo<React.CSSProperties>(
+    () => ({
+      display: 'flex',
+      alignItems: 'center',
+      gap: 6,
+      background: 'none',
+      border: 'none',
+      padding: 0,
+      marginBottom: 20,
+      fontSize: 14,
+      color: '#6b7280',
+      height: 'auto',
+      boxShadow: 'none',
+    }),
+    []
+  );
 
   if (viewState === 'captcha' && captchaConfig) {
     return (
       <CaptchaStep
-        siteKey={captchaConfig.identifier}
+        siteKey={captchaConfig.identifier!}
         onSuccess={handleCaptchaSuccess}
         onCancel={onBack}
       />

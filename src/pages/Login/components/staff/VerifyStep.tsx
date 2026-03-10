@@ -1,6 +1,11 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Button } from 'antd';
-import { ArrowLeftOutlined, MailOutlined, LockOutlined, KeyOutlined } from '@ant-design/icons';
+import {
+  ArrowLeftOutlined,
+  MailOutlined,
+  LockOutlined,
+  KeyOutlined,
+} from '@ant-design/icons';
 import type {
   ChallengeResponse,
   LoginResponse,
@@ -53,7 +58,9 @@ const VerifyStep = ({
 
   // 如果只有一种验证方式，直接进入
   const singleMethodView = useMemo<ViewState | null>(() => {
-    const methodCount = [hasPassword, hasEmailOTP, hasWebAuthn].filter(Boolean).length;
+    const methodCount = [hasPassword, hasEmailOTP, hasWebAuthn].filter(
+      Boolean
+    ).length;
     if (methodCount === 1) {
       if (hasPassword) return 'password';
       if (hasEmailOTP) return 'email_otp';
@@ -71,33 +78,39 @@ const VerifyStep = ({
     }
   }, [singleMethodView, onBack]);
 
-  const backButtonStyle = useMemo<React.CSSProperties>(() => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-    background: 'none',
-    border: 'none',
-    padding: 0,
-    marginBottom: 20,
-    fontSize: 14,
-    color: '#6b7280',
-    height: 'auto',
-    boxShadow: 'none',
-  }), []);
+  const backButtonStyle = useMemo<React.CSSProperties>(
+    () => ({
+      display: 'flex',
+      alignItems: 'center',
+      gap: 6,
+      background: 'none',
+      border: 'none',
+      padding: 0,
+      marginBottom: 20,
+      fontSize: 14,
+      color: '#6b7280',
+      height: 'auto',
+      boxShadow: 'none',
+    }),
+    []
+  );
 
-  const optionButtonStyle = useMemo<React.CSSProperties>(() => ({
-    height: 44,
-    borderRadius: 10,
-    border: '1px solid #e5e7eb',
-    background: '#fff',
-    fontSize: 14,
-    fontWeight: 500,
-    color: '#374151',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: 'none',
-  }), []);
+  const optionButtonStyle = useMemo<React.CSSProperties>(
+    () => ({
+      height: 44,
+      borderRadius: 10,
+      border: '1px solid #e5e7eb',
+      background: '#fff',
+      fontSize: 14,
+      fontWeight: 500,
+      color: '#374151',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      boxShadow: 'none',
+    }),
+    []
+  );
 
   // 实际显示的视图状态
   const activeView = singleMethodView || viewState;

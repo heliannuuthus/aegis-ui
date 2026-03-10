@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Avatar, Button, Tabs, message, Spin } from 'antd';
 import {
@@ -23,11 +23,7 @@ const ProfilePage = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState('profile');
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getProfile();
@@ -45,7 +41,11 @@ const ProfilePage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
   const handleLogout = () => {
     // TODO: 调用登出 API

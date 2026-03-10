@@ -10,7 +10,13 @@ interface SecurityMaskProps {
 }
 
 const FingerprintIcon = ({ style }: { style?: React.CSSProperties }) => (
-  <svg style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+  <svg
+    style={style}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.5}
+  >
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -28,7 +34,10 @@ const SecurityMask = ({ userHint, onLogin, onSwitch }: SecurityMaskProps) => {
       await onLogin();
     } catch (error) {
       if (error instanceof Error) {
-        if (error.name === 'NotAllowedError' || error.message.includes('cancel')) {
+        if (
+          error.name === 'NotAllowedError' ||
+          error.message.includes('cancel')
+        ) {
           message.info('本次验证已取消');
           return;
         }
@@ -47,46 +56,56 @@ const SecurityMask = ({ userHint, onLogin, onSwitch }: SecurityMaskProps) => {
     }
   };
 
-  const primaryButtonStyle = useMemo<React.CSSProperties>(() => ({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    width: '100%',
-    height: 44,
-    padding: '0 20px',
-    background: '#0066ff',
-    color: '#fff',
-    border: 'none',
-    borderRadius: 10,
-    fontSize: 15,
-    fontWeight: 500,
-    marginBottom: 12,
-    boxShadow: 'none',
-    transition: 'background 0.2s ease',
-  }), []);
+  const primaryButtonStyle = useMemo<React.CSSProperties>(
+    () => ({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      width: '100%',
+      height: 44,
+      padding: '0 20px',
+      background: '#0066ff',
+      color: '#fff',
+      border: 'none',
+      borderRadius: 10,
+      fontSize: 15,
+      fontWeight: 500,
+      marginBottom: 12,
+      boxShadow: 'none',
+      transition: 'background 0.2s ease',
+    }),
+    []
+  );
 
-  const secondaryButtonStyle = useMemo<React.CSSProperties>(() => ({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    height: 40,
-    padding: '0 16px',
-    background: 'transparent',
-    color: '#6b7280',
-    border: 'none',
-    borderRadius: 8,
-    fontSize: 14,
-    boxShadow: 'none',
-    transition: 'all 0.2s ease',
-  }), []);
+  const secondaryButtonStyle = useMemo<React.CSSProperties>(
+    () => ({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '100%',
+      height: 40,
+      padding: '0 16px',
+      background: 'transparent',
+      color: '#6b7280',
+      border: 'none',
+      borderRadius: 8,
+      fontSize: 14,
+      boxShadow: 'none',
+      transition: 'all 0.2s ease',
+    }),
+    []
+  );
 
   return (
     <div className={styles.overlay}>
       <div className={styles.avatar}>
         {userHint.picture ? (
-          <Image src={userHint.picture} alt={userHint.nickname} preview={false} />
+          <Image
+            src={userHint.picture}
+            alt={userHint.nickname}
+            preview={false}
+          />
         ) : (
           <div className={styles.avatarFallback}>
             {userHint.nickname.charAt(0).toUpperCase()}
@@ -106,7 +125,11 @@ const SecurityMask = ({ userHint, onLogin, onSwitch }: SecurityMaskProps) => {
         onClick={handleLogin}
         disabled={loading}
         loading={loading}
-        icon={!loading ? <FingerprintIcon style={{ width: 20, height: 20 }} /> : undefined}
+        icon={
+          !loading ? (
+            <FingerprintIcon style={{ width: 20, height: 20 }} />
+          ) : undefined
+        }
       >
         验证身份并登录
       </Button>

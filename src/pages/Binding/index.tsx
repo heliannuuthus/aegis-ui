@@ -59,7 +59,7 @@ function BindingPage() {
       }
     };
     fetchContext();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /** 确认关联 */
@@ -112,24 +112,48 @@ function BindingPage() {
     return null;
   }
 
-  const connectionName = idpNames[identifyCtx.connection] || identifyCtx.connection;
+  const connectionName =
+    idpNames[identifyCtx.connection] || identifyCtx.connection;
   const { user } = identifyCtx;
   const displayName = user?.nickname || '未知用户';
 
   return (
-    <Flex justify="center" align="center" style={{ minHeight: '100vh', padding: 24, background: '#f5f7fb' }}>
+    <Flex
+      justify="center"
+      align="center"
+      style={{ minHeight: '100vh', padding: 24, background: '#f5f7fb' }}
+    >
       <Card style={{ width: 380 }}>
         <Flex vertical align="center" gap={16}>
-          <Avatar size={64} src={user?.picture} icon={!user?.picture && <UserOutlined />} />
-          <Title level={5} style={{ margin: 0 }}>{displayName}</Title>
+          <Avatar
+            size={64}
+            src={user?.picture}
+            icon={!user?.picture && <UserOutlined />}
+          />
+          <Title level={5} style={{ margin: 0 }}>
+            {displayName}
+          </Title>
           <Text type="secondary" style={{ textAlign: 'center' }}>
-            您的 {connectionName} 账户与该已有账户匹配，确认关联后可使用 {connectionName} 直接登录。
+            您的 {connectionName} 账户与该已有账户匹配，确认关联后可使用{' '}
+            {connectionName} 直接登录。
           </Text>
           <Flex vertical gap={8} style={{ width: '100%', marginTop: 8 }}>
-            <Button type="primary" size="large" block onClick={handleConfirm} loading={submitting}>
+            <Button
+              type="primary"
+              size="large"
+              block
+              onClick={handleConfirm}
+              loading={submitting}
+            >
               确认关联
             </Button>
-            <Button type="text" size="large" block onClick={handleCancel} disabled={submitting}>
+            <Button
+              type="text"
+              size="large"
+              block
+              onClick={handleCancel}
+              disabled={submitting}
+            >
               取消
             </Button>
           </Flex>

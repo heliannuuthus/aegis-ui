@@ -8,7 +8,12 @@ import type {
   AuthContext,
   WebAuthnRequestOptions,
 } from '@/types';
-import { initiateChallenge, continueChallenge, login, isRedirectAction } from '@/services/api';
+import {
+  initiateChallenge,
+  continueChallenge,
+  login,
+  isRedirectAction,
+} from '@/services/api';
 import { CHALLENGE_AUDIENCE } from '@/config/env';
 import { isRateLimitError, getRateLimitData } from '@/utils/error';
 import styles from './index.module.scss';
@@ -40,7 +45,10 @@ const WebAuthnVerify = ({
   const hasInitiatedRef = useRef(false);
 
   const performWebAuthnLogin = useCallback(async () => {
-    if (!authContext?.application?.app_id || !authContext?.service?.service_id) {
+    if (
+      !authContext?.application?.app_id ||
+      !authContext?.service?.service_id
+    ) {
       onError(new Error('认证上下文不完整'));
       onBack();
       return;
@@ -59,21 +67,29 @@ const WebAuthnVerify = ({
         channel: email,
       });
 
-      const { convertToPublicKeyOptions, convertAssertionResponse, performWebAuthnAssertion } =
-        await import('../WebAuthn/utils');
+      const {
+        convertToPublicKeyOptions,
+        convertAssertionResponse,
+        performWebAuthnAssertion,
+      } = await import('../WebAuthn/utils');
 
       if (!challengeResp.options) {
         throw new Error('WebAuthn options missing from challenge response');
       }
 
-      const publicKeyOptions = convertToPublicKeyOptions(challengeResp.options as unknown as WebAuthnRequestOptions);
+      const publicKeyOptions = convertToPublicKeyOptions(
+        challengeResp.options as unknown as WebAuthnRequestOptions
+      );
       const credential = await performWebAuthnAssertion(publicKeyOptions);
       const assertionResponse = convertAssertionResponse(credential);
 
-      const verifyResponse = await continueChallenge(challengeResp.challenge_id, {
-        type: 'webauthn',
-        proof: JSON.stringify(assertionResponse),
-      });
+      const verifyResponse = await continueChallenge(
+        challengeResp.challenge_id,
+        {
+          type: 'webauthn',
+          proof: JSON.stringify(assertionResponse),
+        }
+      );
 
       if (!verifyResponse.verified || !verifyResponse.challenge_token) {
         throw new Error('验证失败');
@@ -99,7 +115,10 @@ const WebAuthnVerify = ({
         setViewState('retry');
         setErrorMessage(`请求过于频繁，请 ${info?.retryAfter || 60} 秒后重试`);
       } else if (error instanceof Error) {
-        if (error.name === 'NotAllowedError' || error.message.includes('cancel')) {
+        if (
+          error.name === 'NotAllowedError' ||
+          error.message.includes('cancel')
+        ) {
           setViewState('retry');
           setErrorMessage('验证被取消或超时');
         } else {
@@ -113,7 +132,15 @@ const WebAuthnVerify = ({
     } finally {
       setIsLoading(false);
     }
-  }, [email, authContext, onLoginSuccess, onRedirectAction, onChallenge, onError, onBack]);
+  }, [
+    email,
+    authContext,
+    onLoginSuccess,
+    onRedirectAction,
+    onChallenge,
+    onError,
+    onBack,
+  ]);
 
   // 组件挂载后自动开始验证
   useEffect(() => {
@@ -127,29 +154,35 @@ const WebAuthnVerify = ({
     performWebAuthnLogin();
   }, [performWebAuthnLogin]);
 
-  const backButtonStyle = useMemo<React.CSSProperties>(() => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-    background: 'none',
-    border: 'none',
-    padding: 0,
-    marginBottom: 20,
-    fontSize: 14,
-    color: '#6b7280',
-    height: 'auto',
-    boxShadow: 'none',
-  }), []);
+  const backButtonStyle = useMemo<React.CSSProperties>(
+    () => ({
+      display: 'flex',
+      alignItems: 'center',
+      gap: 6,
+      background: 'none',
+      border: 'none',
+      padding: 0,
+      marginBottom: 20,
+      fontSize: 14,
+      color: '#6b7280',
+      height: 'auto',
+      boxShadow: 'none',
+    }),
+    []
+  );
 
-  const primaryButtonStyle = useMemo<React.CSSProperties>(() => ({
-    height: 44,
-    fontSize: 15,
-    fontWeight: 500,
-    borderRadius: 10,
-    background: '#0066ff',
-    border: 'none',
-    boxShadow: 'none',
-  }), []);
+  const primaryButtonStyle = useMemo<React.CSSProperties>(
+    () => ({
+      height: 44,
+      fontSize: 15,
+      fontWeight: 500,
+      borderRadius: 10,
+      background: '#0066ff',
+      border: 'none',
+      boxShadow: 'none',
+    }),
+    []
+  );
 
   // 验证中状态
   if (viewState === 'verifying' && isLoading) {
@@ -159,7 +192,9 @@ const WebAuthnVerify = ({
           <KeyOutlined style={{ fontSize: 32, color: '#0066ff' }} />
         </div>
         <h3 className={styles.webauthnTitle}>安全密钥验证</h3>
-        <p className={styles.webauthnHint}>请使用您的安全密钥或生物识别完成验证...</p>
+        <p className={styles.webauthnHint}>
+          请使用您的安全密钥或生物识别完成验证...
+        </p>
         <div className={styles.sendingSpinner} />
       </div>
     );
@@ -179,14 +214,17 @@ const WebAuthnVerify = ({
 
       <div className={styles.centerContent}>
         <div className={styles.webauthnIcon}>
-          <KeyOutlined style={{ fontSize: 32, color: viewState === 'error' ? '#ef4444' : '#0066ff' }} />
+          <KeyOutlined
+            style={{
+              fontSize: 32,
+              color: viewState === 'error' ? '#ef4444' : '#0066ff',
+            }}
+          />
         </div>
         <h3 className={styles.webauthnTitle}>
           {viewState === 'error' ? '验证失败' : '安全密钥验证'}
         </h3>
-        {errorMessage && (
-          <p className={styles.errorHint}>{errorMessage}</p>
-        )}
+        {errorMessage && <p className={styles.errorHint}>{errorMessage}</p>}
       </div>
 
       <Button

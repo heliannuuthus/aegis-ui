@@ -14,11 +14,18 @@ import type { Identity } from '@/types';
 import styles from './LinkedAccounts.module.scss';
 
 // IDP 图标和名称映射
-const idpConfig: Record<string, { icon: React.ReactNode; name: string; color: string }> = {
+const idpConfig: Record<
+  string,
+  { icon: React.ReactNode; name: string; color: string }
+> = {
   github: { icon: <GithubOutlined />, name: 'GitHub', color: '#24292e' },
   google: { icon: <GoogleOutlined />, name: 'Google', color: '#4285f4' },
   'wechat-mp': { icon: <WechatOutlined />, name: '微信', color: '#07c160' },
-  'alipay-mp': { icon: <AlipayCircleOutlined />, name: '支付宝', color: '#1677ff' },
+  'alipay-mp': {
+    icon: <AlipayCircleOutlined />,
+    name: '支付宝',
+    color: '#1677ff',
+  },
 };
 
 const LinkedAccounts = () => {
@@ -79,7 +86,9 @@ const LinkedAccounts = () => {
   const boundIdps = identities.map((i) => i.idp);
 
   // 可绑定的 IDP（未绑定的）
-  const availableIdps = Object.keys(idpConfig).filter((idp) => !boundIdps.includes(idp));
+  const availableIdps = Object.keys(idpConfig).filter(
+    (idp) => !boundIdps.includes(idp)
+  );
 
   return (
     <div className={styles.container}>
@@ -106,7 +115,8 @@ const LinkedAccounts = () => {
                     <div>
                       <p className={styles.identityName}>{config.name}</p>
                       <p className={styles.identityDate}>
-                        绑定于 {new Date(identity.created_at).toLocaleDateString()}
+                        绑定于{' '}
+                        {new Date(identity.created_at).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -123,7 +133,10 @@ const LinkedAccounts = () => {
             })}
           </div>
         ) : (
-          <Empty description="暂无关联账号" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          <Empty
+            description="暂无关联账号"
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+          />
         )}
       </Card>
 

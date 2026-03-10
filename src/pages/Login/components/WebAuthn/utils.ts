@@ -1,4 +1,8 @@
-import type { WebAuthnRequestOptions, WebAuthnAssertionResponse, WebAuthnAttestationResponse } from '@/types';
+import type {
+  WebAuthnRequestOptions,
+  WebAuthnAssertionResponse,
+  WebAuthnAttestationResponse,
+} from '@/types';
 
 /**
  * Base64URL 解码为 ArrayBuffer
@@ -7,7 +11,10 @@ export const base64URLToBuffer = (base64url: string): ArrayBuffer => {
   // 将 base64url 转换为 base64
   const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
   // 补齐 padding
-  const paddedBase64 = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+  const paddedBase64 = base64.padEnd(
+    base64.length + ((4 - (base64.length % 4)) % 4),
+    '='
+  );
   // 解码
   const binary = atob(paddedBase64);
   const buffer = new ArrayBuffer(binary.length);
@@ -51,7 +58,8 @@ export const isConditionalUISupported = async (): Promise<boolean> => {
   if (!isWebAuthnSupported()) return false;
   try {
     return (
-      typeof PublicKeyCredential.isConditionalMediationAvailable === 'function' &&
+      typeof PublicKeyCredential.isConditionalMediationAvailable ===
+        'function' &&
       (await PublicKeyCredential.isConditionalMediationAvailable())
     );
   } catch {
@@ -70,7 +78,8 @@ export const isPlatformAuthenticatorAvailable = async (): Promise<boolean> => {
   if (!isWebAuthnSupported()) return false;
   try {
     return (
-      typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function' &&
+      typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable ===
+        'function' &&
       (await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())
     );
   } catch {
@@ -168,7 +177,9 @@ export const convertAssertionResponse = (
       authenticatorData: bufferToBase64URL(response.authenticatorData),
       clientDataJSON: bufferToBase64URL(response.clientDataJSON),
       signature: bufferToBase64URL(response.signature),
-      userHandle: response.userHandle ? bufferToBase64URL(response.userHandle) : undefined,
+      userHandle: response.userHandle
+        ? bufferToBase64URL(response.userHandle)
+        : undefined,
     },
   };
 };

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Modal, Spin } from 'antd';
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
 import styles from './index.module.scss';
@@ -22,22 +22,18 @@ const CaptchaModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const turnstileRef = useRef<TurnstileInstance>(null);
 
-  useEffect(() => {
-    if (open) {
-      setIsLoading(true);
-      setIsSubmitting(false);
-    }
-  }, [open]);
-
-  const handleSuccess = useCallback(async (token: string) => {
-    setIsSubmitting(true);
-    try {
-      await onSuccess(challengeId, token);
-    } catch {
-      turnstileRef.current?.reset();
-      setIsSubmitting(false);
-    }
-  }, [challengeId, onSuccess]);
+  const handleSuccess = useCallback(
+    async (token: string) => {
+      setIsSubmitting(true);
+      try {
+        await onSuccess(challengeId, token);
+      } catch {
+        turnstileRef.current?.reset();
+        setIsSubmitting(false);
+      }
+    },
+    [challengeId, onSuccess]
+  );
 
   const handleWidgetLoad = useCallback(() => {
     setIsLoading(false);
@@ -67,14 +63,14 @@ const CaptchaModal = ({
     >
       <div className={styles.content}>
         <p className={styles.hint}>请完成人机验证以继续</p>
-        
+
         <div className={styles.turnstileWrapper}>
           {isLoading && (
             <div className={styles.loading}>
               <Spin />
             </div>
           )}
-          
+
           {open && siteKey && (
             <Turnstile
               ref={turnstileRef}

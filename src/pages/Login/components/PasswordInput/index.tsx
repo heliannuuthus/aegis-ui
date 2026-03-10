@@ -1,6 +1,10 @@
 import { useState, useMemo } from 'react';
 import { Form, Input, Button } from 'antd';
-import { LockOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
+import {
+  LockOutlined,
+  EyeOutlined,
+  EyeInvisibleOutlined,
+} from '@ant-design/icons';
 import styles from './index.module.scss';
 
 interface PasswordInputProps {
@@ -23,9 +27,12 @@ const PasswordInput = ({
     onSubmit(values.password);
   };
 
-  const submitButtonStyle = useMemo<React.CSSProperties>(() => ({
-    marginTop: 8,
-  }), []);
+  const submitButtonStyle = useMemo<React.CSSProperties>(
+    () => ({
+      marginTop: 8,
+    }),
+    []
+  );
 
   return (
     <div className={styles.container}>

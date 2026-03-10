@@ -11,7 +11,13 @@ import {
   initiateChallenge,
   isRedirectAction,
 } from '@/services/api';
-import { showError, isFlowExpiredError, restartAuthFlow, isRateLimitError, getRateLimitData } from '@/utils/error';
+import {
+  showError,
+  isFlowExpiredError,
+  restartAuthFlow,
+  isRateLimitError,
+  getRateLimitData,
+} from '@/utils/error';
 import { CHALLENGE_AUDIENCE } from '@/config/env';
 import { smartNavigate } from '@/utils/navigation';
 import { passkeyUserCache } from '@/utils/passkeyCache';
@@ -30,7 +36,11 @@ import ChallengeVerify from './components/ChallengeVerify';
 import StaffLogin from './components/staff';
 import Passkey from './components/Passkey';
 import SecurityMask from './components/SecurityMask';
-import { isWebAuthnSupported, isConditionalUISupported, isPlatformAuthenticatorAvailable } from './components/WebAuthn';
+import {
+  isWebAuthnSupported,
+  isConditionalUISupported,
+  isPlatformAuthenticatorAvailable,
+} from './components/WebAuthn';
 import {
   convertToPublicKeyOptions,
   convertAssertionResponse,
@@ -50,7 +60,10 @@ const LoginPage = () => {
   const [challenge, setChallenge] = useState<ChallengeResponse | null>(null);
 
   // 300 action redirect: 后端指示的待完成 actions（seq 递增确保每次 300 都能触发 effect）
-  const [pendingActions, setPendingActions] = useState<{ seq: number; actions: string[] }>({ seq: 0, actions: [] });
+  const [pendingActions, setPendingActions] = useState<{
+    seq: number;
+    actions: string[];
+  }>({ seq: 0, actions: [] });
   const pendingSeqRef = useRef(0);
 
   // 安全验证遮罩状态
@@ -96,13 +109,13 @@ const LoginPage = () => {
       }
     };
     fetchData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 预加载 Turnstile 脚本，减少 captcha 弹出时的延迟
   useEffect(() => {
-    const TURNSTILE_SCRIPT_URL = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
-    
+    const TURNSTILE_SCRIPT_URL =
+      'https://challenges.cloudflare.com/turnstile/v0/api.js';
+
     // 检查是否已经加载
     if (document.querySelector(`script[src="${TURNSTILE_SCRIPT_URL}"]`)) {
       return;
@@ -139,29 +152,38 @@ const LoginPage = () => {
   }, [loading]);
 
   /** 处理 300 RedirectAction 响应 */
-  const handleRedirectAction = useCallback((action: RedirectAction) => {
-    // identify action → 跳转到关联确认页
-    if (action.actions.includes('identify')) {
-      navigate('/binding');
-      return;
-    }
-    if (action.actions.length > 0) {
-      // 后端指示需要完成某些 actions（如 captcha），seq 递增保证每次都触发 effect
-      pendingSeqRef.current += 1;
-      setPendingActions({ seq: pendingSeqRef.current, actions: action.actions });
-    } else {
-      // 无 action，直接跳转（最终成功或页面切换）
-      // 内部路径用 SPA 路由，外部路径（如回调到 atlas）用整页跳转
-      smartNavigate(action.location, navigate);
-    }
-  }, [navigate]);
+  const handleRedirectAction = useCallback(
+    (action: RedirectAction) => {
+      // identify action → 跳转到关联确认页
+      if (action.actions.includes('identify')) {
+        navigate('/binding');
+        return;
+      }
+      if (action.actions.length > 0) {
+        // 后端指示需要完成某些 actions（如 captcha），seq 递增保证每次都触发 effect
+        pendingSeqRef.current += 1;
+        setPendingActions({
+          seq: pendingSeqRef.current,
+          actions: action.actions,
+        });
+      } else {
+        // 无 action，直接跳转（最终成功或页面切换）
+        // 内部路径用 SPA 路由，外部路径（如回调到 atlas）用整页跳转
+        smartNavigate(action.location, navigate);
+      }
+    },
+    [navigate]
+  );
 
-  const handleLoginSuccess = useCallback((response: LoginResponse) => {
-    if (response.location) {
-      // 登录成功后的跳转：内部路径用 SPA 路由，外部路径用整页跳转
-      smartNavigate(response.location, navigate);
-    }
-  }, [navigate]);
+  const handleLoginSuccess = useCallback(
+    (response: LoginResponse) => {
+      if (response.location) {
+        // 登录成功后的跳转：内部路径用 SPA 路由，外部路径用整页跳转
+        smartNavigate(response.location, navigate);
+      }
+    },
+    [navigate]
+  );
 
   const handleLogin = async (
     connection: string,
@@ -214,7 +236,10 @@ const LoginPage = () => {
       });
 
       // 2. 前置条件未完成（验证失败后被追加 captcha 等）
-      if (verifyResponse.required?.conditions?.length) {
+      if (
+        verifyResponse.required &&
+        Object.keys(verifyResponse.required).length > 0
+      ) {
         message.warning('请先完成前置验证');
         return;
       }
@@ -225,13 +250,17 @@ const LoginPage = () => {
       }
 
       // 3. 如果有 challenge_token，使用它调用 Login
-      if (verifyResponse.challenge_token && challenge.connection && challenge.principal) {
+      if (
+        verifyResponse.challenge_token &&
+        challenge.connection &&
+        challenge.principal
+      ) {
         const loginResponse = await login({
           connection: challenge.connection,
           principal: challenge.principal,
           proof: verifyResponse.challenge_token,
         });
-        
+
         if (isRedirectAction(loginResponse)) {
           handleRedirectAction(loginResponse);
         } else if (loginResponse.challenge) {
@@ -261,7 +290,9 @@ const LoginPage = () => {
   };
 
   // 分离 staff 连接单独处理
-  const staffConnection = (connections.idp ?? []).find((c) => c.connection === 'staff');
+  const staffConnection = (connections.idp ?? []).find(
+    (c) => c.connection === 'staff'
+  );
 
   // 独立 Passkey IDP 连接
   const passkeyConnection = useMemo(
@@ -314,54 +345,66 @@ const LoginPage = () => {
         setShowSecurityMask(true);
       }
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [loading, cachedUser, passkeyConnection]);
 
   // 辅助函数：执行 Passkey WebAuthn 登录流程
-  const performPasskeyLogin = useCallback(async (
-    options?: { signal?: AbortSignal; conditional?: boolean }
-  ) => {
-    if (!authContext?.application?.app_id || !authContext?.service?.service_id) {
-      throw new Error('认证上下文不完整');
-    }
+  const performPasskeyLogin = useCallback(
+    async (options?: { signal?: AbortSignal; conditional?: boolean }) => {
+      if (
+        !authContext?.application?.app_id ||
+        !authContext?.service?.service_id
+      ) {
+        throw new Error('认证上下文不完整');
+      }
 
-    // 1. 创建 WebAuthn challenge（后端返回 challenge_id + options）
-    const challengeResp = await initiateChallenge({
-      client_id: authContext.application.app_id,
-      audience: CHALLENGE_AUDIENCE,
-      type: 'passkey:verify',
-      channel_type: 'webauthn',
-      channel: '',
-    });
+      // 1. 创建 WebAuthn challenge（后端返回 challenge_id + options）
+      const challengeResp = await initiateChallenge({
+        client_id: authContext.application.app_id,
+        audience: CHALLENGE_AUDIENCE,
+        type: 'passkey:verify',
+        channel_type: 'webauthn',
+        channel: '',
+      });
 
-    // 2. 转换 options 并执行 WebAuthn assertion
-    // 注意：后端需要在 CreateChallengeResponse 中返回 WebAuthn options
-    // 当前通过 challenge_id 获取 options 可能需要后端额外接口支持
-    if (!challengeResp.options) throw new Error('WebAuthn options missing from challenge response');
-    const publicKeyOptions = convertToPublicKeyOptions(challengeResp.options as unknown as WebAuthnRequestOptions);
-    const credential = options?.conditional
-      ? await performConditionalMediation(publicKeyOptions, options.signal!)
-      : await performWebAuthnAssertion(publicKeyOptions);
-    const assertionResponse = convertAssertionResponse(credential);
+      // 2. 转换 options 并执行 WebAuthn assertion
+      // 注意：后端需要在 CreateChallengeResponse 中返回 WebAuthn options
+      // 当前通过 challenge_id 获取 options 可能需要后端额外接口支持
+      if (!challengeResp.options)
+        throw new Error('WebAuthn options missing from challenge response');
+      const publicKeyOptions = convertToPublicKeyOptions(
+        challengeResp.options as unknown as WebAuthnRequestOptions
+      );
+      const credential = options?.conditional
+        ? await performConditionalMediation(publicKeyOptions, options.signal!)
+        : await performWebAuthnAssertion(publicKeyOptions);
+      const assertionResponse = convertAssertionResponse(credential);
 
-    // 3. 验证凭证（type = webauthn）
-    const verifyResponse = await continueChallenge(challengeResp.challenge_id, {
-      type: 'webauthn',
-      proof: JSON.stringify(assertionResponse),
-    });
+      // 3. 验证凭证（type = webauthn）
+      const verifyResponse = await continueChallenge(
+        challengeResp.challenge_id,
+        {
+          type: 'webauthn',
+          proof: JSON.stringify(assertionResponse),
+        }
+      );
 
-    if (!verifyResponse.verified || !verifyResponse.challenge_token) {
-      throw new Error('验证失败');
-    }
+      if (!verifyResponse.verified || !verifyResponse.challenge_token) {
+        throw new Error('验证失败');
+      }
 
-    // 4. 使用 challenge_token 完成登录
-    const loginResponse = await login({
-      connection: 'passkey',
-      proof: verifyResponse.challenge_token,
-    });
+      // 4. 使用 challenge_token 完成登录
+      const loginResponse = await login({
+        connection: 'passkey',
+        proof: verifyResponse.challenge_token,
+      });
 
-    return loginResponse;
-  }, [authContext]);
+      return loginResponse;
+    },
+    [authContext]
+  );
 
   // 安全验证遮罩的 Passkey 登录处理
   const handleSecurityMaskLogin = useCallback(async () => {
@@ -384,7 +427,10 @@ const LoginPage = () => {
         const info = getRateLimitData(error);
         message.warning(`请求过于频繁，请 ${info?.retryAfter || 60} 秒后重试`);
       } else if (error instanceof Error) {
-        if (error.name !== 'NotAllowedError' && !error.message.includes('cancel')) {
+        if (
+          error.name !== 'NotAllowedError' &&
+          !error.message.includes('cancel')
+        ) {
           showError(error);
         }
       }
@@ -426,7 +472,9 @@ const LoginPage = () => {
         if (abortController.signal.aborted) return;
         if (isRateLimitError(error)) {
           const info = getRateLimitData(error);
-          message.warning(`请求过于频繁，请 ${info?.retryAfter || 60} 秒后重试`);
+          message.warning(
+            `请求过于频繁，请 ${info?.retryAfter || 60} 秒后重试`
+          );
         } else {
           console.debug('Page conditional UI:', error);
         }
@@ -439,7 +487,14 @@ const LoginPage = () => {
       abortController.abort();
       conditionalAbortRef.current = null;
     };
-  }, [shouldPageHandlePasskey, loading, showSecurityMask, performPasskeyLogin, handleLoginSuccess, handleRedirectAction]);
+  }, [
+    shouldPageHandlePasskey,
+    loading,
+    showSecurityMask,
+    performPasskeyLogin,
+    handleLoginSuccess,
+    handleRedirectAction,
+  ]);
 
   // 手动点击 Passkey 按钮登录（模态弹窗模式）
   const handleManualPasskeyLogin = useCallback(async () => {
@@ -464,7 +519,10 @@ const LoginPage = () => {
         const info = getRateLimitData(error);
         message.warning(`请求过于频繁，请 ${info?.retryAfter || 60} 秒后重试`);
       } else if (error instanceof Error) {
-        if (error.name !== 'NotAllowedError' && !error.message.includes('cancel')) {
+        if (
+          error.name !== 'NotAllowedError' &&
+          !error.message.includes('cancel')
+        ) {
           showError(error);
         }
       }
@@ -475,16 +533,16 @@ const LoginPage = () => {
   }, [performPasskeyLogin, handleLoginSuccess, handleRedirectAction]);
 
   const hasConnections =
-    idpConnections.length > 0 ||
-    shouldShowStaff ||
-    shouldPageHandlePasskey;
+    idpConnections.length > 0 || shouldShowStaff || shouldPageHandlePasskey;
 
   if (loading) {
     return (
       <div className={styles.container}>
         <div className={styles.card}>
           <div className={styles.loadingState}>
-            <Spin indicator={<LoadingOutlined spin style={{ fontSize: 32 }} />} />
+            <Spin
+              indicator={<LoadingOutlined spin style={{ fontSize: 32 }} />}
+            />
             <p>正在加载...</p>
           </div>
         </div>
@@ -521,7 +579,12 @@ const LoginPage = () => {
               height={48}
               styles={{
                 root: { width: 48, height: 48, display: 'flex' },
-                image: { width: 48, height: 48, borderRadius: 12, objectFit: 'contain' },
+                image: {
+                  width: 48,
+                  height: 48,
+                  borderRadius: 12,
+                  objectFit: 'contain',
+                },
               }}
             />
           ) : (
@@ -547,96 +610,111 @@ const LoginPage = () => {
             onSwitch={handleSecurityMaskSwitch}
           />
         ) : (
-        <>
-        {/* 标题 */}
-        <h1 className={clsx(styles.title, !authContext?.service?.description && styles.noSubtitle)}>
-          登录到 {authContext?.application?.name || 'Aegis'}
-        </h1>
-        {authContext?.service?.description && (
-          <p className={styles.subtitle}>{authContext.service.description}</p>
-        )}
+          <>
+            {/* 标题 */}
+            <h1
+              className={clsx(
+                styles.title,
+                !authContext?.service?.description && styles.noSubtitle
+              )}
+            >
+              登录到 {authContext?.application?.name || 'Aegis'}
+            </h1>
+            {authContext?.service?.description && (
+              <p className={styles.subtitle}>
+                {authContext.service.description}
+              </p>
+            )}
 
-        {/* 登录内容 */}
-        <div className={styles.content}>
-          {/* 独立指纹/面容登录（非 staff delegate，优先展示） */}
-          {shouldPageHandlePasskey && (
-            <div className={styles.formSection}>
-              <Passkey
-                onClick={handleManualPasskeyLogin}
-                loading={loginLoading && activeConnection === 'passkey'}
-                disabled={loginLoading}
-              />
+            {/* 登录内容 */}
+            <div className={styles.content}>
+              {/* 独立指纹/面容登录（非 staff delegate，优先展示） */}
+              {shouldPageHandlePasskey && (
+                <div className={styles.formSection}>
+                  <Passkey
+                    onClick={handleManualPasskeyLogin}
+                    loading={loginLoading && activeConnection === 'passkey'}
+                    disabled={loginLoading}
+                  />
+                </div>
+              )}
+
+              {/* 分隔线 - 指纹/面容和 Staff 之间 */}
+              {shouldPageHandlePasskey && shouldShowStaff && (
+                <div className={styles.divider}>
+                  <span>或</span>
+                </div>
+              )}
+
+              {/* Staff 登录（邮箱 + 验证方式） */}
+              {shouldShowStaff && staffConnection && (
+                <div className={styles.formSection}>
+                  <StaffLogin
+                    connection={staffConnection}
+                    delegatedConnections={connections.factor ?? []}
+                    captchaConfig={captchaConfig}
+                    authContext={authContext}
+                    loading={loginLoading && activeConnection === 'staff'}
+                    disabled={loginLoading}
+                    pendingActions={pendingActions}
+                    onLogin={handleLoginSuccess}
+                    onRedirectAction={handleRedirectAction}
+                    onChallenge={setChallenge}
+                    onStepChange={setStaffStep}
+                  />
+                </div>
+              )}
+
+              {/* 分隔线 - Staff 和社交登录之间（用户进入验证步骤后隐藏） */}
+              {staffStep === 'email' &&
+                (shouldShowStaff || shouldPageHandlePasskey) &&
+                idpConnections.length > 0 && (
+                  <div className={styles.divider}>
+                    <span>或</span>
+                  </div>
+                )}
+
+              {/* 社交登录（用户进入验证步骤后隐藏） */}
+              {staffStep === 'email' && idpConnections.length > 0 && (
+                <div className={styles.socialSection}>
+                  {idpConnections.map((conn) => (
+                    <IDPButton
+                      key={conn.connection}
+                      connection={conn}
+                      loading={
+                        loginLoading && activeConnection === conn.connection
+                      }
+                      disabled={loginLoading}
+                      onClick={(strategy) =>
+                        handleLogin(conn.connection, { strategy })
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* 空状态 */}
+              {!hasConnections && (
+                <div className={styles.emptyState}>
+                  <p>暂无可用的登录方式</p>
+                </div>
+              )}
             </div>
-          )}
 
-          {/* 分隔线 - 指纹/面容和 Staff 之间 */}
-          {shouldPageHandlePasskey && shouldShowStaff && (
-            <div className={styles.divider}>
-              <span>或</span>
+            {/* 页脚 */}
+            <div className={styles.footer}>
+              <span>
+                登录即表示您同意
+                <a href="/terms" target="_blank" rel="noopener noreferrer">
+                  服务条款
+                </a>
+                和
+                <a href="/privacy" target="_blank" rel="noopener noreferrer">
+                  隐私政策
+                </a>
+              </span>
             </div>
-          )}
-
-          {/* Staff 登录（邮箱 + 验证方式） */}
-          {shouldShowStaff && staffConnection && (
-            <div className={styles.formSection}>
-              <StaffLogin
-                connection={staffConnection}
-                delegatedConnections={connections.factor ?? []}
-                captchaConfig={captchaConfig}
-                authContext={authContext}
-                loading={loginLoading && activeConnection === 'staff'}
-                disabled={loginLoading}
-                pendingActions={pendingActions}
-                onLogin={handleLoginSuccess}
-                onRedirectAction={handleRedirectAction}
-                onChallenge={setChallenge}
-                onStepChange={setStaffStep}
-              />
-            </div>
-          )}
-
-          {/* 分隔线 - Staff 和社交登录之间（用户进入验证步骤后隐藏） */}
-          {staffStep === 'email' && (shouldShowStaff || shouldPageHandlePasskey) && idpConnections.length > 0 && (
-            <div className={styles.divider}>
-              <span>或</span>
-            </div>
-          )}
-
-          {/* 社交登录（用户进入验证步骤后隐藏） */}
-          {staffStep === 'email' && idpConnections.length > 0 && (
-            <div className={styles.socialSection}>
-              {idpConnections.map((conn) => (
-                <IDPButton
-                  key={conn.connection}
-                  connection={conn}
-                  loading={loginLoading && activeConnection === conn.connection}
-                  disabled={loginLoading}
-                  onClick={(strategy) =>
-                    handleLogin(conn.connection, { strategy })
-                  }
-                />
-              ))}
-            </div>
-          )}
-
-          {/* 空状态 */}
-          {!hasConnections && (
-            <div className={styles.emptyState}>
-              <p>暂无可用的登录方式</p>
-            </div>
-          )}
-        </div>
-
-        {/* 页脚 */}
-        <div className={styles.footer}>
-          <span>
-            登录即表示您同意
-            <a href="/terms" target="_blank" rel="noopener noreferrer">服务条款</a>
-            和
-            <a href="/privacy" target="_blank" rel="noopener noreferrer">隐私政策</a>
-          </span>
-        </div>
-        </>
+          </>
         )}
       </div>
     </div>

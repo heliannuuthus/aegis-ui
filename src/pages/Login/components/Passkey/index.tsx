@@ -22,22 +22,25 @@ const Passkey = ({
   disabled = false,
   className,
 }: PasskeyProps) => {
-  const buttonStyle = useMemo<React.CSSProperties>(() => ({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    width: '100%',
-    height: 44,
-    padding: '0 16px',
-    background: '#fff',
-    border: '1px solid #e5e7eb',
-    borderRadius: 10,
-    boxShadow: 'none',
-    transition: 'all 0.2s ease',
-    opacity: loading || disabled ? 0.6 : 1,
-    cursor: loading || disabled ? 'not-allowed' : 'pointer',
-  }), [loading, disabled]);
+  const buttonStyle = useMemo<React.CSSProperties>(
+    () => ({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 10,
+      width: '100%',
+      height: 44,
+      padding: '0 16px',
+      background: '#fff',
+      border: '1px solid #e5e7eb',
+      borderRadius: 10,
+      boxShadow: 'none',
+      transition: 'all 0.2s ease',
+      opacity: loading || disabled ? 0.6 : 1,
+      cursor: loading || disabled ? 'not-allowed' : 'pointer',
+    }),
+    [loading, disabled]
+  );
 
   return (
     <Button
@@ -49,7 +52,11 @@ const Passkey = ({
       onClick={onClick}
       disabled={disabled || loading}
       loading={loading}
-      icon={!loading ? <PasskeyIcon style={{ width: 20, height: 20, color: '#374151' }} /> : undefined}
+      icon={
+        !loading ? (
+          <PasskeyIcon style={{ width: 20, height: 20, color: '#374151' }} />
+        ) : undefined
+      }
     >
       <span style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>
         使用指纹或面容登录

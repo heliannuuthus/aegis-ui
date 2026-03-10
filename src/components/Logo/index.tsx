@@ -50,10 +50,7 @@ const Logo = ({
           />
           {/* 锁孔图案 */}
           <circle cx="24" cy="22" r="6" fill="rgba(255,255,255,0.9)" />
-          <path
-            d="M22 25H26V32H22V25Z"
-            fill="rgba(255,255,255,0.9)"
-          />
+          <path d="M22 25H26V32H22V25Z" fill="rgba(255,255,255,0.9)" />
           {/* 渐变定义 */}
           <defs>
             <linearGradient
