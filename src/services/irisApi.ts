@@ -5,7 +5,7 @@
  * nginx 会将 iris.heliannuuthus.com/api/* 映射到后端 /user/*。
  */
 
-import type { WebAuth } from '@aegis/sdk/web';
+import type { WebAuth } from '@heliannuuthus/aegis-sdk/web';
 import { IRIS_AUTH_CONFIG, getIrisApiBase } from '@/config/env';
 import type {
   UserProfile,
