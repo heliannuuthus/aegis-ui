@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "private": true,
+  "packageManager": "pnpm@10.31.0",
   "description": "Aegis Auth UI - 认证界面",
   "scripts": {
     "dev": "vite",
