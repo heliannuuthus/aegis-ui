@@ -103,7 +103,12 @@ export function getPreconditionRequired(
 ): Record<string, { identifier?: string; strategy?: string[] }> | null {
   const authError = error as AuthError;
   if (authError?.status !== 412 || !authError.data) return null;
-  return authError.data.required || null;
+  return (
+    (authError.data.required as Record<
+      string,
+      { identifier?: string; strategy?: string[] }
+    >) || null
+  );
 }
 
 /**

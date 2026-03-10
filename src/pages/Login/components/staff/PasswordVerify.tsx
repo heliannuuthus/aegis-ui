@@ -164,7 +164,7 @@ const PasswordVerify = ({
   if (viewState === 'captcha' && captchaConfig) {
     return (
       <CaptchaStep
-        siteKey={captchaConfig.identifier}
+        siteKey={captchaConfig.identifier!}
         onSuccess={handleCaptchaSuccess}
         onCancel={onBack}
       />

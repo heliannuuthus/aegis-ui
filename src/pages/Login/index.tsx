@@ -236,7 +236,10 @@ const LoginPage = () => {
       });
 
       // 2. 前置条件未完成（验证失败后被追加 captcha 等）
-      if (verifyResponse.required?.conditions?.length) {
+      if (
+        verifyResponse.required &&
+        Object.keys(verifyResponse.required).length > 0
+      ) {
         message.warning('请先完成前置验证');
         return;
       }

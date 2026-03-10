@@ -248,7 +248,10 @@ const EmailOTPVerify = ({
           }
         );
 
-        if (verifyResponse.required?.conditions?.length) {
+        if (
+          verifyResponse.required &&
+          Object.keys(verifyResponse.required).length > 0
+        ) {
           message.warning('请先完成前置验证');
           setIsLoading(false);
           return;

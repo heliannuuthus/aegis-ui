@@ -204,6 +204,8 @@ export interface ChallengeResponse {
   hint?: string;
   /** 下次可重发的冷却时间（秒） */
   retry_after?: number;
+  /** 过期时间戳（毫秒） */
+  expires_at?: number;
   /** 关联的 Connection（用于后续 Login） */
   connection?: string;
   /** 关联的 Principal（用于后续 Login） */
