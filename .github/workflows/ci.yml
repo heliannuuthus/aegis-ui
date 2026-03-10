@@ -12,5 +12,3 @@ permissions:
 jobs:
   ci:
     uses: heliannuuthus/hephaestus/.github/workflows/ci-frontend.yml@main
-    with:
-      registry-url: "https://npm.pkg.github.com"
