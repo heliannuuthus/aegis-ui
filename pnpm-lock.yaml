@@ -12,8 +12,8 @@ importers:
         specifier: ^6.1.0
         version: 6.1.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@heliannuuthus/aegis-sdk':
-        specifier: '*'
-        version: 1.0.0
+        specifier: 1.1.0
+        version: 1.1.0
       '@marsidev/react-turnstile':
         specifier: ^1.4.2
         version: 1.4.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -409,8 +409,8 @@ packages:
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@heliannuuthus/aegis-sdk@1.0.0':
-    resolution: {integrity: sha512-HkVfRACimwHw32gSqw6Xhb4Olvdkn8lolKKmWR2AFM4AK7pDfbYLY6AeoIXHlGT5zocJTRNcddtmlezCEqnWNA==}
+  '@heliannuuthus/aegis-sdk@1.1.0':
+    resolution: {integrity: sha512-JMvsVd2+Kt+3/j9qF0iAFEM1db95KYZVHC0eb/4wNUIVJ+E6J+3ImrGEvGZ6y+W7SIv6t5fj31dfOd5B+Kx4Ew==}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -2117,7 +2117,7 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
-  '@heliannuuthus/aegis-sdk@1.0.0':
+  '@heliannuuthus/aegis-sdk@1.1.0':
     dependencies:
       paseto-ts: 2.0.5
 
