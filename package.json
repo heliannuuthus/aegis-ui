@@ -15,7 +15,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@heliannuuthus/aegis-sdk": "1.1.0",
+    "@heliannuuthus/aegis-sdk": "1.2.0",
     "@ant-design/icons": "^6.1.0",
     "@marsidev/react-turnstile": "^1.4.2",
     "ahooks": "^3.7.8",
